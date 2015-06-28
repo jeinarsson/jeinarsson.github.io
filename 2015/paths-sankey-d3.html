@@ -28,7 +28,23 @@
   <script src="/js/pathSankey/examples.js"></script>
   
 
-  <link rel="icon" type="image/png" href="/images/favicon.png">
+<link rel="apple-touch-icon" sizes="57x57" href="/apple-touch-icon-57x57.png">
+<link rel="apple-touch-icon" sizes="60x60" href="/apple-touch-icon-60x60.png">
+<link rel="apple-touch-icon" sizes="72x72" href="/apple-touch-icon-72x72.png">
+<link rel="apple-touch-icon" sizes="76x76" href="/apple-touch-icon-76x76.png">
+<link rel="apple-touch-icon" sizes="114x114" href="/apple-touch-icon-114x114.png">
+<link rel="apple-touch-icon" sizes="120x120" href="/apple-touch-icon-120x120.png">
+<link rel="apple-touch-icon" sizes="144x144" href="/apple-touch-icon-144x144.png">
+<link rel="apple-touch-icon" sizes="152x152" href="/apple-touch-icon-152x152.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon-180x180.png">
+<link rel="icon" type="image/png" href="/favicon-32x32.png" sizes="32x32">
+<link rel="icon" type="image/png" href="/android-chrome-192x192.png" sizes="192x192">
+<link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96">
+<link rel="icon" type="image/png" href="/favicon-16x16.png" sizes="16x16">
+<link rel="manifest" href="/manifest.json">
+<meta name="msapplication-TileColor" content="#2b5797">
+<meta name="msapplication-TileImage" content="/mstile-144x144.png">
+<meta name="theme-color" content="#ffffff">
 </head>
 <body>
   <div class="container">
@@ -85,11 +101,11 @@
 <svg id="figExampleSankey" viewBox='0 0 450 250' preserveAspectRatio="xMinYMin meet" width="450" height="250"/>
 <figcaption>The "government" node is pre-selected, click on nodes to see their connections.</figcaption>
 </figure>
-<p>The path structure is revealed when the user selects one of the nodes. Selecting a node highlights all paths passing through that node. Therefore we clearly see the flow from the <em>Government</em> node to the <em>Traffic</em> committee, and then also how that flow splits into one part to <em>Accepted</em> and one part to _Rejected. By arranging the Tree to look like a Sankey we lift some of the initial cognitive load for the user, while allowing them to browse a richer dataset once they grasp what they are looking at. In my original figure I use this &#8220;path Sankey&#8221; as an overview. When user selects a node, all its paths are highlighted and a detail view is triggered to show a list of the relevant proposals.</p>
+<p>The path structure is revealed when the user selects one of the nodes. Selecting a node highlights all paths passing through that node. Therefore we clearly see the flow from the <em>Government</em> node to the <em>Traffic</em> committee, and then also how that flow splits into one part to <em>Accepted</em> and one part to <em>Rejected</em>. By arranging the Tree to look like a Sankey we lift some of the initial cognitive load for the user, while allowing them to browse a richer dataset once they grasp what they are looking at. In my original figure I use this &#8220;path Sankey&#8221; as an overview. When user selects a node, all its paths are highlighted and a detail view is triggered to show a list of the relevant proposals.</p>
 <p>There is a drawback which I have not found any solution to: arranging the paths to look like the Sankey disrupts the visual continuity of the paths (seen when highlighted). The path, say, <em>Government</em> &#8594; <em>Traffic committee</em> &#8594; <em>Rejected</em> is visually discontinuous at the committee node. This drawback is most obvious with small and moderate datasets, like in these examples. The visual disruption is diminished when there are more nodes and smaller flows, like in the <a href="http://demokratikollen.se/forslagen/reinfeldt2">original figure</a> where I think it works all right.</p>
 <p>This method works for paths with three steps. If additional layers are shown, the visual &#8220;memory&#8221; only reaches two steps back. Nevertherless, the two steps are an improvement over the original Sankey&#8217;s single step memory.</p>
 <h1>What should be improved</h1>
-<p>[My implementation](https://github.com/jeinarsson/pathSankey) of this figure in D3.js works well, but it has a number of flaws which I think should be addressed:</p>
+<p><a href="https://github.com/jeinarsson/pathSankey">My implementation</a> of this figure in D3.js works well, but it has a number of flaws which I think should be addressed:</p>
 <h2>1. Partition both nodes and flows</h2>
 <p>My implementation partitions the Sankey flows into the parts from the Tree representation, but the nodes are still monolithic.</p>
 <p>To fully carry through the thought of &#8220;rearranging the Tree into a Sankey&#8221;, the Sankey nodes should be made by stacking the corresponding small nodes in the Tree. This would allow for more precise highlighting during user interactions.</p>
@@ -107,8 +123,9 @@
 <p>Therefore, the overall positions of nodes and flows should be determined first, like for a Sankey. This layout step may be automated, by hand, or both. The point is that it is a separate concern to partition these given elements into the sub-flows and sub-nodes necessary for highlighting the underlying path data. This is an algorithmic step which should not require additional input by any designer.</p>
 <h1>Finally</h1>
 <p>Code (<span class="caps">MIT</span> Licence) at <a href="http://github.com/jeinarsson/pathSankey">Github</a>.</p>
-<p>There&#8217;s a minimal example in <a href="http://bl.ocks.org/jeinarsson/4e748e4bfe42d4f52ae9">a bl.ocks</a> and a more advanced example with randomized data in <a href="http://bl.ocks.org/jeinarsson/e37aa55c3b0e11ae6fa1">another bl.ocks</a>.</p>
+<p>There&#8217;s a minimal example in <a href="http://bl.ocks.org/jeinarsson/4e748e4bfe42d4f52ae9">a bl.ocks here</a> and a more advanced example with randomized data in <a href="http://bl.ocks.org/jeinarsson/e37aa55c3b0e11ae6fa1">another bl.ocks here</a>.</p>
 <p>For more code, see the source of this page and of the <a href="http://demokratikollen.se/forslagen/reinfeldt2">original interactive visualization</a>.</p>
+<p>If you found this post interesting, you will also like <a href="http://elijahmeeks.com/#content/blog/2015_06_10_sankey">a short piece by Elijah Meeks</a> on Sankey diagrams for path visualization at Netflix.</p>
 <p>Write me an e-mail or ping me on Twitter if you found this useful or interesting, or if you have any questions or comments.</p>
   </section>
 
@@ -117,10 +134,15 @@
     </div>
     <div class="full-width columns">
       <footer id="site-footer" class="shadow-box">
+      <ul>
+      <li>
+      <a href="/about"><img src="/images/portrait/midi.png" title="Jonas Einarsson (portrait)" height="120" width="84"/></a>
+      </li>
+      </ul>
         <ul>
-          <li><a href="http://github.com/jeinarsson"><i class="fa fa-fw fa-github"></i>jeinarsson</a></li>
-          <li><a href="http://twitter.com/jnsein"><i class="fa fa-fw fa-twitter"></i>@jnsein</a></li>
-          <li><a href="mailto:me@jonaseinarsson.se"><i class="fa fa-fw fa-envelope-o"></i>me@jonaseinarsson.se</a></li>
+          <li><a class="footerbutton" href="http://github.com/jeinarsson"><i class="fa fa-fw fa-github"></i>jeinarsson</a></li>
+          <li><a class="footerbutton" href="http://twitter.com/jnsein"><i class="fa fa-fw fa-twitter"></i>@jnsein</a></li>
+          <li><a class="footerbutton" href="mailto:jonas.einarsson@gmail.com"><i class="fa fa-fw fa-envelope-o"></i>jonas.einarsson@gmail.com</a></li>
         </ul>
       </footer>
     </div>
