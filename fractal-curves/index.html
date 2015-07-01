@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Fractal Spiral Generator</title>
+  <meta name="description" content="">
+  <meta name="author" content="">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link rel="stylesheet" href="/css/skeleton-wide.css">
+  <link rel="stylesheet" href="/css/font-awesome.min.css">
+
+  <link rel="apple-touch-icon" sizes="57x57" href="/apple-touch-icon-57x57.png">
+  <link rel="apple-touch-icon" sizes="60x60" href="/apple-touch-icon-60x60.png">
+  <link rel="apple-touch-icon" sizes="72x72" href="/apple-touch-icon-72x72.png">
+  <link rel="apple-touch-icon" sizes="76x76" href="/apple-touch-icon-76x76.png">
+  <link rel="apple-touch-icon" sizes="114x114" href="/apple-touch-icon-114x114.png">
+  <link rel="apple-touch-icon" sizes="120x120" href="/apple-touch-icon-120x120.png">
+  <link rel="apple-touch-icon" sizes="144x144" href="/apple-touch-icon-144x144.png">
+  <link rel="apple-touch-icon" sizes="152x152" href="/apple-touch-icon-152x152.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon-180x180.png">
+  <link rel="icon" type="image/png" href="/favicon-32x32.png" sizes="32x32">
+  <link rel="icon" type="image/png" href="/android-chrome-192x192.png" sizes="192x192">
+  <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96">
+  <link rel="icon" type="image/png" href="/favicon-16x16.png" sizes="16x16">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="msapplication-TileColor" content="#2b5797">
+  <meta name="msapplication-TileImage" content="/mstile-144x144.png">
+  <meta name="theme-color" content="#ffffff">
+
+  <script src="/js/lib/d3-3.5.5.min.js"></script>
+
+<style>
+
+
+path.line {
+  fill: none;
+  stroke: steelblue;
+  stroke-width: 1.5px;
+}
+
+#editor {
+        padding: 0px;
+        margin:0px;
+        border-radius: 6px;
+        background-color: #ffffff;
+        box-shadow: outset 1px 1px 1px #888;
+        border-width: 0 1px 1px 0;
+        border-color: #999;
+        border-style: solid;    
+}
+
+.chart {
+        padding: 0px;
+        margin:0px;
+        border-radius: 6px;
+        background-color: #eaeaea;
+        box-shadow: inset 1px 1px 1px #888;
+        border-width: 0 1px 1px 0;
+        border-color: #999;
+        border-style: solid;
+}
+
+circle.marker.selected {
+  fill: #ff7f0e;
+  stroke: #ff7f0e;
+}
+
+circle.marker {
+  fill: #fff;
+  fill-opacity: .2;
+  stroke: steelblue;
+  stroke-width: 1.5px;
+  cursor: move;
+}
+
+
+
+path.flagmarker {
+  fill: none;
+  stroke: darkblue;
+  stroke-width:1.5px;
+}
+rect.flagmarker {
+  fill: none;
+  stroke: none;
+  cursor: pointer;
+  pointer-events: all;
+}
+
+path.grid {
+  fill: none;
+  stroke: lightgray;
+  stroke-width: 1px;
+  shape-rendering: crispEdges;
+}
+
+
+circle#newPoint {cursor: crosshair;}
+
+#previewToolbar > label, #previewToolbar > input {
+    display: inline;
+    margin-right: 20px;
+}
+
+
+</style>
+
+<script type="text/javascript">
+
+fractals = {};
+
+var vec2 = {
+    sub: function(v1, v2) {
+        return [v1[0]-v2[0], v1[1]-v2[1]];
+    },
+    norm: function(v) {
+        return Math.sqrt(v[0]*v[0]+v[1]*v[1]);
+    },
+    normsqr: function(v) {
+        return v[0]*v[0]+v[1]*v[1];
+    },    
+    dist: function(v1, v2) {
+        var dx = v1[0]-v2[0], dy = v1[1]-v2[1];
+        return Math.sqrt(dx*dx + dy*dy);
+    },
+    distsqr: function(v1, v2) {
+        var dx = v1[0]-v2[0], dy = v1[1]-v2[1];
+        return dx*dx + dy*dy;
+    },    
+    muls: function(v, s) {
+        return [v[0]*s, v[1]*s];
+    },
+    rot90: function(v) {
+      return [-v[1], v[0]];
+    },
+    dot: function(v1, v2) {
+      return v1[0]*v2[0]+v1[1]*v2[1];
+    },
+    normalize: function(v) {
+      var invn = 1.0/Math.sqrt(v[0]*v[0]+v[1]*v[1]);
+      return [v[0]*invn, v[1]*invn];
+    }
+};
+
+var mat2 = {
+  maddvec: function(m, v, addv) {
+    return [
+    m[0][0]*v[0] + m[0][1]*v[1] + addv[0],
+    m[1][0]*v[0] + m[1][1]*v[1] + addv[1]
+    ];
+  },
+  mulvec: function(m, v) {
+    return [
+    m[0][0]*v[0] + m[0][1]*v[1],
+    m[1][0]*v[0] + m[1][1]*v[1]
+    ];
+  },
+  toTransformString: function(m) {
+    return "matrix("+m[0][0]+","+m[0][1]+","+m[1][0]+","+m[1][1]+",0,0)";
+  }
+};
+
+
+fractals.iterate = function(p, generator) {
+
+  // for each segment in generator, place a
+  // translated + transformed copy of p, excluding first point.
+
+  var result = [];
+  for (var i=0; i < generator.length; i++) {
+    var flipx = generator[i].flags&1;
+    var flipy = generator[i].flags&2;
+    var p0 = generator[i].p0;
+    var A = generator[i].transform;
+    
+    for (var j=(i==0?0:1); j<p.length; j++) {
+      var pidx = flipx ? p.length-1-j : j;
+      var px = p[pidx][0], py = p[pidx][1];
+      if (flipx) px = 1-px;
+      if (flipy) py = -py;
+      var point = mat2.maddvec(A, [px,py], p0);
+      result.push(point);
+    }
+  } 
+  return result;
+
+};
+
+fractals.generatorEditor = function() {
+
+  var width = 400, height = 400;
+  var margin = { top: 0, right: 0, bottom: 0, left: 0 };
+
+  var onGeneratorChange = function() {return;};
+
+  var generatorPoints = [
+      [0,0],
+      [1/3,0],
+      [1/2,1/3],
+      [2/3,0],
+      [1,0]
+  ];
+  var generatorSegmentFlags = [
+      0,0,0,0
+  ];
+
+  var generator = null; //computed from points and flags in redraw()
+  var lines = null;
+
+  var viewSize = [2,2];
+
+  var snap =false;
+  var grid = {
+    type: 0, // square
+    size: 10
+  };
+
+  var lineData = null;
+
+  var dragged = null;
+  var selected = null;
+  var newPoint = null;
+
+  function chart(selection) {
+    selection.each(function(data) {
+
+      var totalWidth = width+margin.left+margin.right, 
+          totalHeight = height+margin.top+margin.bottom;
+
+      var parent = d3.select(this);
+      parent
+        .attr("width", totalWidth)
+        .attr("height", totalHeight);
+
+
+      var yscale = d3.scale.linear()
+          .range([height, 0]).domain([-0.5*viewSize[1],0.5*viewSize[1]]);
+      var xscale = d3.scale.linear()
+          .range([0,width]).domain([0.5-0.5*viewSize[0],0.5+0.5*viewSize[0]]);
+
+      var top = parent.selectAll("g").data([0]);
+      top.enter()
+        .append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+      parent
+        .on("mousemove", mousemove)
+        .on("mouseup", mouseup)
+        .on("mousedown", mousedown);
+      d3.select(window)
+        .on("keydown", keydown);
+
+      var line = d3.svg.line()
+                  .x(function(d){return xscale(d[0]);})
+                  .y(function(d){return yscale(d[1]);})
+                  .interpolate("linear");
+
+      function drawGrid() {
+        var xdomain = xscale.domain();
+        var ydomain = yscale.domain();
+
+        var hlineData = d3.range(viewSize[1]*grid.size+1).map(function(d) {
+          return [[xdomain[0],ydomain[0]+d/grid.size],[xdomain[1],ydomain[0]+d/grid.size]];
+        });
+        var vlineData = d3.range(viewSize[0]*grid.size+1).map(function(d){
+          return [[xdomain[0]+d/grid.size,ydomain[0]],[xdomain[0]+d/grid.size,ydomain[1]]];
+        });
+        
+        var hlines = top.selectAll("path.hgrid").data(hlineData);
+        hlines.enter().append("path")
+          .attr("class", "grid hgrid");
+        hlines
+          .attr("d", line);
+        hlines.exit().remove();
+
+        var vlines = top.selectAll("path.vgrid").data(vlineData);
+        vlines.enter().append("path")
+          .attr("class", "grid vgrid");
+        vlines
+          .attr("d", line);
+        vlines.exit().remove();
+
+      }
+      drawGrid();
+
+      top.append("path")
+          .attr("id", "linePath")
+          .attr("class", "line");
+
+      top.append("path")
+          .attr("class", "line")
+          .attr("id", "newPointPath")
+          .style("opacity", 0.5);
+
+
+      function redraw() {
+
+        lineData = generatorPoints;
+
+        generator = [];
+        lines = [];
+
+        var pos = lineData[0];
+        var dir = vec2.sub(lineData[lineData.length-1],pos);
+        var invscalesqr = 1/vec2.normsqr(dir);
+        generator.angle = -Math.atan2(dir[1],dir[0])*180/Math.PI;
+                                
+        generator.invtransform = [
+                                [dir[0]*invscalesqr, dir[1]*invscalesqr],
+                                [-dir[1]*invscalesqr, dir[0]*invscalesqr]
+                              ];
+
+
+        var generatorData = lineData.map(function(d){
+          var p = vec2.sub(d, pos);
+          return mat2.mulvec(generator.invtransform, p);
+        }); 
+
+        for (var i = 0; i < generatorData.length-1; i++) {
+          
+          var dir = vec2.sub(generatorData[i+1], generatorData[i]);
+          var linedir = vec2.sub(lineData[i+1], lineData[i]);
+          var scale = vec2.norm(dir);
+          var linescale = vec2.norm(linedir);
+          var linenormdir = vec2.muls(linedir,1/linescale);
+
+          lines.push({
+              p0: lineData[i],
+              dir: linedir,
+              normdir: linenormdir,
+              scale: linescale,
+              scalesqr: linescale*linescale
+          });
+
+          generator.push({
+            p0: generatorData[i],
+            flags: generatorSegmentFlags[i],
+            dir: dir,
+            scale: scale,
+            transform: [
+                        [dir[0], -dir[1]],
+                        [dir[1], dir[0]]
+                       ]
+          });
+
+        }
+
+
+        top.select("#linePath")
+          .attr("d", line(lineData));
+
+        var flagMarkers = top.selectAll("path.flagmarker").data(lines);
+        flagMarkers.enter().append("path")
+          .classed("flagmarker", true);
+
+        flagMarkers
+          .attr("d", function(d,i){
+            var p0 = [d.p0[0], d.p0[1]];
+            if (generatorSegmentFlags[i]&1) { //flip x
+              p0[0] += 0.25*d.dir[0];
+              p0[1] += 0.25*d.dir[1];
+            } else {
+              p0[0] += 0.75*d.dir[0];
+              p0[1] += 0.75*d.dir[1];
+            }
+
+            var p1 = [p0[0], p0[1]];
+            var flipy = (generatorSegmentFlags[i]&2) ? -1 : 1;
+            if (generatorSegmentFlags[i]&1) { //flip x
+              p1[0] += 0.05*d.normdir[0];
+              p1[1] += 0.05*d.normdir[1];
+
+              p1[0] += -0.03*d.normdir[1]*flipy;
+              p1[1] += 0.03*d.normdir[0]*flipy;
+            } else {
+              p1[0] -= 0.05*d.normdir[0];
+              p1[1] -= 0.05*d.normdir[1];
+
+              p1[0] += -0.03*d.normdir[1]*flipy;
+              p1[1] += 0.03*d.normdir[0]*flipy;
+
+            }
+
+
+            return line([p0,p1]);
+          });
+
+        flagMarkers.exit().remove();
+
+
+        var flagMarkersClickTargets = top.selectAll("rect.flagmarker").data(lines);
+        flagMarkersClickTargets.enter().append("rect")
+          .classed("flagmarker", true);
+
+        segmentStartX = function(d){return xscale(d.p0[0]+0.25*d.dir[0]);};
+        segmentStartY = function(d){return yscale(d.p0[1]+0.25*d.dir[1])+yscale(0.05)-yscale(0);};
+        flagMarkersClickTargets
+          .attr("width", function(d){return 0.5*(xscale(d.scale)-xscale(0));})
+          .attr("height", yscale(-0.1)-yscale(0))
+          .attr("x",segmentStartX)
+          .attr("y",segmentStartY)
+          .attr("transform", function(d){
+            return "rotate("+(-Math.atan2(d.dir[1],d.dir[0])*180/Math.PI)+","+xscale(d.p0[0]+0.25*d.dir[0])+", "+yscale(d.p0[1]+0.25*d.dir[1])+")";
+          })
+          .on("mousedown", function(d,i){
+            generatorSegmentFlags[i] = (generatorSegmentFlags[i] + 1 % 4);
+            redraw();
+            onGeneratorChange(generator);
+          });
+
+        flagMarkersClickTargets.exit().remove();
+
+        var markers = top.selectAll(".marker").data(generatorPoints);
+        markers.enter().append("circle")
+          .classed("marker", true)
+          .attr("r",5)
+          .on("mousedown", function(d) { selected = dragged = d; newPoint = null; redraw(); });
+
+        markers
+          .classed("selected", function(d) { return d === selected; })
+          .attr("cx", function(d) { return xscale(d[0]); })
+          .attr("cy", function(d) { return yscale(d[1]); });
+
+        markers.exit().remove();
+
+
+        var ghostPoint = top.selectAll("#newPoint").data(newPoint ? [0] : []);
+        ghostPoint.enter().append("circle")
+          .attr("id","newPoint")
+          .attr("r", 4)
+          .style("opacity", 0.5);
+
+        ghostPoint
+          .attr("cx", newPoint? xscale(newPoint.pos[0]): null)
+          .attr("cy", newPoint? yscale(newPoint.pos[1]): null); 
+        ghostPoint.exit().remove();        
+        
+        top.select("#newPointPath")
+          .attr("d", newPoint? line([lineData[newPoint.segment],newPoint.pos,lineData[newPoint.segment+1]]) : null);
+
+        if (d3.event) {
+          d3.event.preventDefault();
+          d3.event.stopPropagation();
+        }
+      }
+
+
+      function computeSnap(mdata) {
+        var sx = Math.round(mdata[0]*grid.size)/grid.size;
+        var sy = Math.round(mdata[1]*grid.size)/grid.size;
+        return [sx, sy];
+      }
+
+      function mousemove() {
+        var m = d3.mouse(top.node());
+
+
+        var mx = xscale.invert(Math.max(0, Math.min(width, m[0])));
+        var my = yscale.invert(Math.max(0, Math.min(height, m[1])));
+
+        var mdata = [mx, my];
+        var mdataRaw = [mx, my];
+
+        if (snap) {
+          mdata = computeSnap(mdata);
+          mx = mdata[0]; my = mdata[1];
+        }
+
+        if (dragged) {
+          dragged[0] = mx;
+          dragged[1] = my;
+          redraw();
+          onGeneratorChange(generator);
+        } else { // not dragged, then hovering
+
+          for (var i = 0; i < generatorPoints.length; i++) {
+            if (vec2.distsqr(generatorPoints[i], mdataRaw) < 0.07*0.07) {
+              newPoint = null; redraw(); return;
+            }
+          }
+          var nearest = [0,9999999];
+          for (var i = 0; i < lines.length; i++) {
+            var s = lines[i];
+            var v=vec2.sub(mdata, s.p0);
+            var alpha = vec2.dot(v,s.dir);
+            if (alpha < -0.2*s.scalesqr || alpha > 1.2*s.scalesqr) {
+              dist = 99999999;
+            } else {
+              dist = vec2.normsqr(vec2.sub(v, vec2.muls(s.dir, alpha/s.scalesqr )));
+            }
+            if (dist < nearest[1]) {
+              nearest[0] = i;
+              nearest[1] = dist;
+            }
+          }
+          if (nearest[1]>0.07*0.07) {
+            newPoint = {pos: [mx, my], segment: nearest[0]};
+          } else {
+            newPoint = null;
+          }
+          redraw();
+        }
+      }
+
+      function mousedown() {
+        if (newPoint) {
+          generatorPoints.splice(newPoint.segment+1, 0, newPoint.pos);
+          var newflag = generatorSegmentFlags[newPoint.segment];
+          generatorSegmentFlags.splice(newPoint.segment, 0, newflag);
+          selected = dragged = generatorPoints[newPoint.segment+1];
+          newPoint = null;
+          redraw();
+          onGeneratorChange(generator);
+        }
+      }
+
+      function mouseup() {
+        mousemove();
+        dragged = null;
+      }
+
+      function keydown() {
+        switch (d3.event.keyCode) {
+          case 27: // escape
+            if (selected || newPoint) {
+              selected = newPoint = null;
+              redraw();
+            }
+            break;
+
+          case 8: // backspace
+          case 46: { // delete
+            if (!selected) break;
+            if (dragged) break;
+            if (generatorPoints.length <= 2) break;
+            var i = generatorPoints.indexOf(selected);
+            generatorPoints.splice(i, 1);
+            generatorSegmentFlags.splice(i == generatorSegmentFlags.length?i-1:i,1);
+            newPoint = selected = null;
+            redraw();
+            onGeneratorChange(generator);
+            break;
+          }
+
+          case 37:  // left 
+          case 38:  // up 
+          case 39:  // right 
+          case 40: { // down
+            if (selected) {
+              var left = d3.event.keyCode == 37;
+              var up = d3.event.keyCode == 38;
+              var right = d3.event.keyCode == 39;
+              var down = d3.event.keyCode == 40;
+
+              var sign = up || right ? 1 : -1;
+              var idx = up || down ? 1 : 0;
+              if (!snap) {
+                selected[idx] += sign*0.1/grid.size;
+              } else {
+                selected[idx] += sign/grid.size;
+                selected[idx] = computeSnap(selected)[idx];
+              }
+
+              newPoint = null;
+              redraw();
+              onGeneratorChange(generator);
+            }
+            break;
+          }
+        }
+      }
+
+      
+      redraw(); onGeneratorChange(generator);
+    }); // selection.each
+  }
+
+ chart.width = function(_) {
+    if (!arguments.length) return width;
+    else width = +_;
+    return chart;
+ };
+ chart.height = function(_) {
+    if (!arguments.length) return height;
+    else height = +_;
+    return chart;
+ };
+
+ chart.onGeneratorChange = function(_) {
+    if (!arguments.length) return onGeneratorChange;
+    else onGeneratorChange = _;
+    return chart;
+ };
+
+ chart.snap = function(_) {
+    if (!arguments.length) return snap;
+    else snap = _;
+    return chart;
+ };
+
+
+ return chart;
+
+};
+
+fractals.linePlot = function() {
+  var width = 200, height = 200;
+  var margin = { top: 0, right: 0, bottom: 0, left: 0 };
+
+  var interpolation = "linear";
+  var onDraw = null;
+  var angle = 0;
+
+  function chart(selection) {
+    selection.each(function(data) {
+
+      var totalWidth = width+margin.left+margin.right, 
+          totalHeight = height+margin.top+margin.bottom;
+
+      var yscale = d3.scale.linear()
+          .range([height, 0]).domain([-0.75,0.75]);
+      var xscale = d3.scale.linear()
+          .range([0,width]).domain([-0.25,1.25]);
+
+
+      var parent = d3.select(this);
+      parent
+        .attr("width", totalWidth)
+        .attr("height", totalHeight)
+        .classed("chart",true);
+      var top = parent.selectAll("g").data([0]);
+      top.enter()
+        .append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+
+      var line = d3.svg.line()
+                  .x(function(d){return xscale(d[0]);})
+                  .y(function(d){return yscale(d[1]);})
+                  .interpolate(interpolation);
+
+
+      var linedata = line(data);
+      var transformdata = "rotate("+ angle + ","+xscale(0.5)+","+yscale(0)+")";
+
+      if (onDraw) onDraw(linedata, transformdata);
+
+      var path = top.selectAll("path").data([0]);
+      path.enter()
+        .append("path").attr("class", "line");
+      path.attr("transform", transformdata);
+
+
+
+
+      path.attr("d", line(data));
+
+    });
+  }
+
+ chart.width = function(_) {
+    if (!arguments.length) return width;
+    else width = +_;
+    return chart;
+ };
+ chart.height = function(_) {
+    if (!arguments.length) return height;
+    else height = +_;
+    return chart;
+ };
+ chart.angle = function(_) {
+    if (!arguments.length) return angle;
+    else angle = +_;
+    return chart;
+ }; 
+ chart.interpolation = function(_) {
+    if (!arguments.length) return interpolation;
+    else interpolation = _;
+    return chart;
+ };
+  chart.onDraw = function(_) {
+    if (!arguments.length) return onDraw;
+    else onDraw = _;
+    return chart;
+ };
+
+ return chart;
+};
+
+
+fractals.fractalEditor = function() {
+  var totalWidth = 960, totalHeight = 600;
+  var margin = { top: 25, right: 10, bottom: 60, left: 10 };
+  var height = totalHeight - margin.top - margin.bottom;
+  var width = totalWidth - margin.left - margin.right;
+
+  var levelDelay = 40;
+  var levels = [];
+
+  var levelTimer = null;
+
+  function chart(selection) {
+    selection.each(function(data) {
+
+
+
+
+      var parent = d3.select(this);
+
+      var lastGenerator = null;
+
+      var maxLevel = 4;
+      
+      var editorChart = fractals.generatorEditor();
+      var smallChart = fractals.linePlot()
+                        .width(115).height(115);
+      var bigChart = fractals.linePlot()
+                      .width(400).height(400).interpolation("basis")
+                      .onDraw(function(linedata,transformdata){
+                        d3.select("#exportformline").attr("value", linedata);
+                        d3.select("#exportformtransform").attr("value", transformdata);
+                      });
+
+      editorChart.onGeneratorChange(function(generator) {
+        lastGenerator = generator;
+
+        if (levelTimer) {
+            clearTimeout(levelTimer);
+            levelTimer = null;
+        }
+
+        smallChart.angle(generator.angle);
+        bigChart.angle(generator.angle);
+
+        var unitLine = [[0,0],[1,0]];
+        levels = [unitLine];
+        for (var i=0;i<3;i++) {
+          levels.push(fractals.iterate(levels[i], generator));
+          d3.selectAll("#smallPreview-"+i).datum(levels[i+1]).call(smallChart);  
+        }
+
+        for (var i=3;i<maxLevel;i++) {
+          levels.push(fractals.iterate(levels[i], generator));
+        }
+
+        d3.selectAll("#bigPreview").datum(levels[maxLevel]).call(bigChart);
+
+        
+        
+      });
+
+      var editorSvg = d3.select("#editor");
+
+      d3.select("#chkSnap")
+        .on("change", function(){
+          editorChart.snap(this.checked);
+          editorSvg.call(editorChart);
+        });
+
+      d3.select("#chkInterpolation")
+        .on("change", function(){
+            bigChart.interpolation(this.checked ? "basis" : "linear");
+            d3.selectAll("#bigPreview").call(bigChart);
+        });
+      d3.select("#numPreviewLevel")
+        .on("change", function(){
+            maxLevel = this.value;
+            editorChart.onGeneratorChange()(lastGenerator);
+            d3.selectAll("#bigPreview").call(bigChart);
+        });
+
+      editorSvg.call(editorChart);
+    });
+  }
+
+ chart.width = function(_) {
+    if (!arguments.length) return width;
+    else width = +_;
+    return chart;
+ };
+ chart.height = function(_) {
+    if (!arguments.length) return height;
+    else height = +_;
+    return chart;
+ };
+ return chart;
+};
+
+</script>
+
+</head>
+<body>
+
+
+<div class="container" id="topContainer">
+<div class="row">
+<div class="eight columns">
+<figure>
+  <svg id="editor"></svg>
+  <div class="toolbar" id="toolbar">
+    <label><input type="checkbox" id="chkSnap"> Snap to grid</label>
+  </div>
+  </figure>
+  <figure>
+<svg id="smallPreview-0"></svg>
+<svg id="smallPreview-1"></svg>
+<svg id="smallPreview-2"></svg>
+</figure>
+</div>
+<div class="eight columns">
+<figure>
+<div><svg id="bigPreview"></svg>
+</div>
+<div id="previewToolbar">
+<label>
+Level 
+<input id="numPreviewLevel" type="number" min="1" max="15" value="4"/>
+</label>
+<label><input type="checkbox" id="chkInterpolation" checked> Interpolation</label>
+<form action="/fractals/curve.svg" method="POST">
+<input type="hidden" id="exportformline" name="d" value=""/>
+<input type="hidden" id="exportformtransform" name="transform" value=""/>
+<input type="submit" class="button-primary" value="Save .svg"/>
+</form>
+</div>
+</figure>
+</div>
+</div>
+<div class="row">
+    <div class="twelwe columns">
+        <h1>What's this?</h1>
+        <p>
+        This is a fractal curve generator. You make a connected sequence of line segments, the <i>generator</i>, on the grid to the left. Each of your segments is replaced with a new copy of the whole, again and again. After a few iterations (the fractal <i>level</i>) you get the curve to the right. Each segment in the generator has a direction (the little arrow) which determines how the new copy is oriented.
+        </p>
+        <p>
+        <b>Click and drag nodes</b> to select and move them around. <b>Hit DELETE</b> to remove the selected node. <b>Click nearby a segment</b> to insert a new node on it. <b>Click on a segment</b> to flip its direction. 
+        </p>
+    </div>
+</div>
+</div>
+
+<script type="text/javascript">
+d3.select("#topContainer").call(fractals.fractalEditor());
+</script>
+
+
+
+
+
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-62955302-1', 'auto');
+  ga('send', 'pageview');
+
+</script>  
+
+</body>
+</html> 
