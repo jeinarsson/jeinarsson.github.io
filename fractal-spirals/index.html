@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Fractal Spiral Generator</title>
+  <meta name="description" content="">
+  <meta name="author" content="">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link rel="stylesheet" href="/css/skeleton-wide.css">
+  <link rel="stylesheet" href="/css/font-awesome.min.css">
+
+  <link rel="apple-touch-icon" sizes="57x57" href="/apple-touch-icon-57x57.png">
+  <link rel="apple-touch-icon" sizes="60x60" href="/apple-touch-icon-60x60.png">
+  <link rel="apple-touch-icon" sizes="72x72" href="/apple-touch-icon-72x72.png">
+  <link rel="apple-touch-icon" sizes="76x76" href="/apple-touch-icon-76x76.png">
+  <link rel="apple-touch-icon" sizes="114x114" href="/apple-touch-icon-114x114.png">
+  <link rel="apple-touch-icon" sizes="120x120" href="/apple-touch-icon-120x120.png">
+  <link rel="apple-touch-icon" sizes="144x144" href="/apple-touch-icon-144x144.png">
+  <link rel="apple-touch-icon" sizes="152x152" href="/apple-touch-icon-152x152.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon-180x180.png">
+  <link rel="icon" type="image/png" href="/favicon-32x32.png" sizes="32x32">
+  <link rel="icon" type="image/png" href="/android-chrome-192x192.png" sizes="192x192">
+  <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96">
+  <link rel="icon" type="image/png" href="/favicon-16x16.png" sizes="16x16">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="msapplication-TileColor" content="#2b5797">
+  <meta name="msapplication-TileImage" content="/mstile-144x144.png">
+  <meta name="theme-color" content="#ffffff">
+
+  <script src="/js/lib/d3-3.5.5.min.js"></script>
+  <style>
+    #topContainer {
+      padding-top: 20px;
+    }
+
+    path {
+      fill: darkorange;
+      stroke: none;
+    }
+
+    path.generator {
+      fill: purple;
+    }   
+
+    path.triangle {
+      fill: #ccc;
+    }
+
+    #editor svg {
+      padding: 0px;
+      margin:0px;
+      border-radius: 6px;
+      background-color: #ffffff;
+      box-shadow: outset 1px 1px 1px #888;
+      border-width: 0 1px 1px 0;
+      border-color: #999;
+      border-style: solid;    
+    }
+
+    .chart {
+      padding: 0px;
+      margin:0px;
+      border-radius: 6px;
+      background-color: #eaeaea;
+      box-shadow: inset 1px 1px 1px #888;
+      border-width: 0 1px 1px 0;
+      border-color: #999;
+      border-style: solid;
+    }
+
+
+
+
+
+    circle#newPoint {cursor: crosshair;}
+
+    #previewToolbar input {
+      margin:10px;
+    }
+
+
+    .gt-remove, .gt-add {
+      font-size: 20px;
+      line-height: 25px;
+      cursor: pointer;
+    }
+    .gt-s, .gt-scale {
+      margin:0px;
+    }
+
+    .overlay {
+      fill: none;
+      pointer-events: all;
+      cursor: move;
+    }
+
+    .gt-s, .gt-scale {
+      max-width: 100px;
+    }
+
+    #toolbar table {
+      width: 100%;
+    }
+    #toolbar thead {
+      font-weight:700;
+    }
+
+  </style>
+
+
+</head>
+<body>
+
+
+  <script type="text/javascript">
+
+    fractals = {};
+
+    var vec2 = {
+      sub: function(v1, v2) {
+        return [v1[0]-v2[0], v1[1]-v2[1]];
+      },
+      norm: function(v) {
+        return Math.sqrt(v[0]*v[0]+v[1]*v[1]);
+      },
+      normsqr: function(v) {
+        return v[0]*v[0]+v[1]*v[1];
+      },    
+      dist: function(v1, v2) {
+        var dx = v1[0]-v2[0], dy = v1[1]-v2[1];
+        return Math.sqrt(dx*dx + dy*dy);
+      },
+      distsqr: function(v1, v2) {
+        var dx = v1[0]-v2[0], dy = v1[1]-v2[1];
+        return dx*dx + dy*dy;
+      },    
+      muls: function(v, s) {
+        return [v[0]*s, v[1]*s];
+      },
+      rot90: function(v) {
+        return [-v[1], v[0]];
+      },
+      dot: function(v1, v2) {
+        return v1[0]*v2[0]+v1[1]*v2[1];
+      },
+      normalize: function(v) {
+        var invn = 1.0/Math.sqrt(v[0]*v[0]+v[1]*v[1]);
+        return [v[0]*invn, v[1]*invn];
+      }
+    };
+
+    var mat2 = {
+      maddvec: function(m, v, addv) {
+        return [
+        m[0][0]*v[0] + m[0][1]*v[1] + addv[0],
+        m[1][0]*v[0] + m[1][1]*v[1] + addv[1]
+        ];
+      },
+      mulvec: function(m, v) {
+        return [
+        m[0][0]*v[0] + m[0][1]*v[1],
+        m[1][0]*v[0] + m[1][1]*v[1]
+        ];
+      },
+
+      toTransformString: function(m) {
+        return "matrix("+m[0][0]+","+m[0][1]+","+m[1][0]+","+m[1][1]+",0,0)";
+      }
+    };
+
+// Set up the curve (base shape) stuff
+// curve(s) embodies the curve, transformFromInput
+// contains the tangents/normals
+
+
+var b = 0.306349; // magic value for golden ratio spirals
+var maxs = 4*Math.PI;
+
+function curve(s) {
+  var r = Math.exp(-b*s);
+  return [
+  r*Math.cos(s)-1,
+  r*Math.sin(s)
+  ];
+}
+
+function transformFromInput(input) {
+
+  var cos = Math.exp(-b*input.s)*input.scale*Math.cos(input.s);
+  var sin = Math.exp(-b*input.s)*input.scale*Math.sin(input.s);
+
+  var transform;
+  // these transforms are valid for the particular value of b = .306349
+  switch (input.flipFlag) {
+    case 0:
+    transform = [[-0.828405 *cos + 0.56013 *sin, -0.56013 *cos - 0.828405 *sin], [-0.56013 *cos - 0.828405 *sin, 0.828405 *cos - 0.56013 *sin]]; 
+    break;
+    case 1:
+    transform = [[0.828405 *cos - 0.56013 *sin, 0.56013 *cos + 0.828405 *sin], [0.56013 *cos + 0.828405 *sin, -0.828405 *cos + 0.56013 *sin]];
+    break;
+    case 2:
+    transform = [[- cos, sin], [-sin, -cos]];
+    break;
+    case 3:
+    transform = [[cos, -sin], [sin, cos]];
+    break;
+  }
+  return {
+    p0: curve(input.s),
+    transform: transform
+  };
+}
+var baseShape = (function(){
+
+  var startWidth = 0.1;
+  var numSubdivisions = 100;
+
+  var result = [];
+  for (var i = 0; i < numSubdivisions; i++) {
+    var s = maxs/(numSubdivisions-1)*i;
+    var cos = Math.cos(s);
+    var sin = Math.sin(s);
+    var midpoint = curve(s);
+    var normal = [0.956139 *cos - 0.292912 *sin, 0.292912 *cos + 0.956139 *sin];
+    var w = startWidth*(1-i/(numSubdivisions-1))*(1-i/(numSubdivisions-1));
+    result.push([
+      midpoint[0] + w*normal[0], midpoint[1] + w*normal[1] 
+      ]);
+    result.unshift([ // "prepend"
+      midpoint[0] - w*normal[0], midpoint[1] - w*normal[1] 
+      ]);
+  }
+  return result;
+
+})();
+
+
+
+fractals.transformShape = function(path, generator) {
+  var p0 = generator.p0;
+  var A = generator.transform;  
+  var newpath = [];
+  for (var pIndex=0; pIndex < path.length; pIndex++) {
+    var newp = mat2.maddvec(A, path[pIndex], p0);
+    newpath.push(newp);
+  }
+  return newpath;
+};
+
+fractals.iterate = function(paths, generators) {
+
+  var result = [];
+  for (var i=0; i < generators.length; i++) {
+    for (var pathIndex=0; pathIndex < paths.length; pathIndex++) {
+      result.push(fractals.transformShape(paths[pathIndex], generators[i]));
+    }
+  } 
+  return result;
+};
+
+
+fractals.generatorEditor = function() {
+
+  var width = 400, height = 400;
+  var margin = { top: 0, right: 0, bottom: 0, left: 0 };
+
+
+  var onGeneratorChange = function() {return;};
+
+  var inputs = [
+  {
+    s: 2*Math.PI,
+    scale: 1.2,
+    flipFlag: 0
+  },
+  { 
+    s: 0.5*Math.PI,
+    scale: 0.9,
+    flipFlag: 0
+  }    
+  ];
+
+
+  var lastRemoved = {s: Math.Pi/2, scale:1,flipFlag:1};
+  var generators, generatorShapes;
+  function chart(selection) {
+    selection.each(function(data) {
+
+      var totalWidth = width+margin.left+margin.right, 
+      totalHeight = height+margin.top+margin.bottom;
+
+      var figure = d3.select(this);
+
+      var parent = figure.append("svg");
+
+      var toolbar = figure.append("div").attr("id","toolbar");
+      var toolbarTable = toolbar.append("table");
+      toolbarTable.append("thead").html('<tr><th>Position</th><th>Size</th><th>Flip</th><th>Remove</th></tr>');
+      var generatorToolbar = toolbarTable.append("tbody");
+
+
+      toolbar.selectAll("span.gt-add").data([0]).enter()
+      .append("span").attr("class","gt-add")
+      .on("click", function(d,i) {
+        inputs.push({s: lastRemoved.s, scale:lastRemoved.scale,flipFlag:lastRemoved.flipFlag});
+        recompute(); redraw();
+      }).html('<i class="fa fa-plus"></i> Add new spiral');     
+
+
+      parent
+      .attr("width", totalWidth)
+      .attr("height", totalHeight);
+
+      var yscale = d3.scale.linear()
+      .range([height, 0]).domain([-2,2]);
+      var xscale = d3.scale.linear()
+      .range([0,width]).domain([-3,1]);
+
+      var top = parent.selectAll("g").data([0]);
+      top.enter()
+      .append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+      d3.select(window).on("keydown", keydown);
+
+      var line = d3.svg.line()
+      .x(function(d){return xscale(d[0]);})
+      .y(function(d){return yscale(d[1]);})
+      .interpolate("linear");
+
+
+
+      var generatorShapePathGroup = top.selectAll("g.generators").data([0])
+      .enter().append("g").attr("class","generators");
+
+      var baseShapePath = top.selectAll("path.baseShape").data([baseShape]).enter()
+      .append("path").attr("class", "baseShape shape")
+      .attr("d", line);
+
+      function recompute() {
+        generators = inputs.map(transformFromInput); 
+        generatorShapes = generators.map(function(g) {return fractals.transformShape(baseShape,g);});
+        onGeneratorChange(generators);
+      }
+
+      function redraw() {
+
+        var generatorShapePaths = generatorShapePathGroup.selectAll("path.generator").data(generatorShapes);
+        generatorShapePaths.enter().append("path")
+        .attr("class","generator shape");
+        generatorShapePaths.attr("d", line);
+        generatorShapePaths.exit().remove();
+
+
+        var generatorToolbars = generatorToolbar.selectAll("tr.generatorToolbar").data(inputs);
+        var enteringGeneratorToolbars = generatorToolbars.enter()
+        .append("tr").attr("class","generatorToolbar");
+        enteringGeneratorToolbars.append("td").append("input")
+        .attr("id", function(d,i) {return "gt-s-"+i;})
+        .attr("class", "gt-s")
+        .attr("type", "range")
+        .attr("min", 0)
+        .attr("max", maxs)
+        .attr("step", maxs/100)
+        .on("change", function(d) {
+          d.s = this.value;
+          recompute();
+          redraw();
+        });
+        enteringGeneratorToolbars.append("td").append("input")
+        .attr("id", function(d,i) {return "gt-scale-"+i;})
+        .attr("class", "gt-scale")
+        .attr("type", "range")
+        .attr("min", 0.25)
+        .attr("max", 4)
+        .attr("step", 0.05)
+        .on("change", function(d) {
+          d.scale = this.value;
+          recompute();
+          redraw();
+        });
+
+        enteringGeneratorToolbars.append("td").append("i")
+        .attr("class", "gt-flip fa")
+        .style("cursor", "pointer")
+        .on("click", function(d,i) {
+          d.flipFlag = (d.flipFlag + 1) % 4;
+          recompute();
+          redraw();
+        });
+
+
+        enteringGeneratorToolbars.append("td").append("i")
+        .attr("class", "gt-remove fa fa-trash")
+        .style("cursor", "pointer")
+        .on("click", function(d,i) {
+          lastRemoved = d;
+          inputs.splice(i,1);
+          recompute();
+          redraw();
+        });
+
+        generatorToolbars.select(".gt-s")
+        .attr("value", function(d) {return d.s;});
+        generatorToolbars.select(".gt-scale")
+        .attr("value", function(d) {return d.scale;});
+        generatorToolbars.select(".gt-flip")
+        .attr("class", function(d) {
+          var dir;
+          switch (d.flipFlag) {
+            case 0:
+            dir = "left";
+            break;
+            case 1:
+            dir = "up";
+            break;
+            case 2:
+            dir = "right";
+            break;
+            case 3:
+            dir = "down";
+            break;
+          }
+          return "gt-flip fa fa-arrow-"+dir;}
+          );
+
+        generatorToolbars.exit().remove();
+
+
+
+        if (d3.event) {
+          d3.event.preventDefault();
+          d3.event.stopPropagation();
+        }
+      }
+
+
+
+
+      function keydown() {
+        switch (d3.event.keyCode) {
+          case 27: // escape
+          break;
+
+          case 8: // backspace
+          case 46: { // delete
+            break;
+          }
+
+          case 37:  // left 
+          case 38:  // up 
+          case 39:  // right 
+          case 40: { // down
+            break;
+          }
+        }
+      }
+
+      
+      recompute(); redraw(); onGeneratorChange(generators);
+    }); // selection.each
+}
+
+chart.width = function(_) {
+  if (!arguments.length) return width;
+  else width = +_;
+  return chart;
+};
+chart.height = function(_) {
+  if (!arguments.length) return height;
+  else height = +_;
+  return chart;
+};
+
+chart.onGeneratorChange = function(_) {
+  if (!arguments.length) return onGeneratorChange;
+  else onGeneratorChange = _;
+  return chart;
+};
+
+
+return chart;
+
+};
+
+fractals.polyPlot = function() {
+  var width = 200, height = 200;
+  var margin = { top: 0, right: 0, bottom: 0, left: 0 };
+
+  var interpolation = "linear";
+  var angle = 0;
+  var showTriangle = false;
+  var yscale = d3.scale.linear().domain([-2,2]);
+  var xscale = d3.scale.linear().domain([-3,1]);
+
+  function chart(selection) {
+    selection.each(function(data) {
+
+      var totalWidth = width+margin.left+margin.right, 
+      totalHeight = height+margin.top+margin.bottom;
+
+      var parent = d3.select(this);
+      parent
+      .attr("width", totalWidth)
+      .attr("height", totalHeight)
+      .classed("chart",true);
+
+      yscale.range([height, 0]);
+      xscale.range([0,width]);
+
+      var triangletop = parent.selectAll("g.triangletop").data([0]);
+      triangletop.enter().append("g").attr("class","triangletop");
+      
+      var top = parent.selectAll("g.top").data([0]);
+      top.enter().append("g").attr("class","top");
+      top.attr("transform", "translate(" + margin.left + "," + margin.top + ")" );
+
+      var line = d3.svg.line()
+      .x(function(d){return xscale(d[0]);})
+      .y(function(d){return yscale(d[1]);})
+      .interpolate(interpolation);
+
+
+
+      triangleData = [[0,0],[1450,0],[1450,-637],[0,-165]];
+      var triangle = triangletop.selectAll("path.triangle").data(showTriangle ? [triangleData] : []);
+      triangle.enter().append("path").attr("class","triangle");
+      triangle.attr("d", function(d) {return d3.svg.line()(d)+"Z";});
+      triangle.attr("transform", "translate("+(margin.left+0.05*width)+","+(margin.top+0.6*height)+") scale("+(0.9*width/1450)+")");
+      triangle.exit().remove();
+
+
+      var path = top.selectAll("path").data(data);
+      path.enter()
+      .append("path").attr("class", "shape");
+      path.attr("d", line);
+      path.attr("transform", "rotate("+angle+","+xscale(-1)+","+yscale(0)+")");
+      path.exit().remove();
+
+      var overlay = parent.selectAll("rect").data([0]);
+      overlay.enter()
+      .append("rect")
+      .attr("class", "overlay")
+      .attr("x", margin.left)
+      .attr("y", margin.top)  
+      .attr("width", width)
+      .attr("height", height)
+      .call(d3.behavior.zoom()
+        .x(xscale)
+        .y(yscale)
+        .scaleExtent([0.2, 5])
+        .on("zoom", function() {
+          top.selectAll("path")
+          .attr("d", line)
+          .attr("transform", "rotate("+angle+","+xscale(-1)+","+yscale(0)+")");
+        })
+        );
+
+
+    });
+}
+
+chart.width = function(_) {
+  if (!arguments.length) return width;
+  else width = +_;
+  return chart;
+};
+chart.height = function(_) {
+  if (!arguments.length) return height;
+  else height = +_;
+  return chart;
+};
+chart.angle = function(_) {
+  if (!arguments.length) return angle;
+  else angle = +_;
+  return chart;
+}; 
+chart.showTriangle = function(_) {
+  if (!arguments.length) return showTriangle;
+  else showTriangle = _;
+  return chart;
+}; 
+chart.interpolation = function(_) {
+  if (!arguments.length) return interpolation;
+  else interpolation = _;
+  return chart;
+};
+
+return chart;
+};
+
+
+
+
+fractals.fractalEditor = function() {
+  var totalWidth = 960, totalHeight = 600;
+  var margin = { top: 25, right: 10, bottom: 60, left: 10 };
+  var height = totalHeight - margin.top - margin.bottom;
+  var width = totalWidth - margin.left - margin.right;
+
+  var levels = [];
+  var singleLevels = [];
+
+  function chart(selection) {
+    selection.each(function(data) {
+
+
+
+
+      var parent = d3.select(this);
+
+      var lastGenerator = null;
+
+      var maxLevel = 3;
+      
+      var editorChart = fractals.generatorEditor();
+      var bigChart = fractals.polyPlot()
+      .width(400).height(400).interpolation("linear");
+
+      editorChart.onGeneratorChange(function(generators) {
+        lastGenerator = generators;
+
+
+        singleLevels = [[baseShape]];
+        levels = [[baseShape]];
+        for (var i=0;i<maxLevel;i++) {
+          singleLevels.push(fractals.iterate(singleLevels[i], generators));
+          levels.push(levels[i].concat(singleLevels[i+1]));
+        }
+
+        d3.selectAll("#bigPreview").datum(levels[maxLevel]).call(bigChart);
+
+        
+        
+      });
+
+      var editorSvg = d3.select("#editor");
+
+      d3.select("#numPreviewLevel")
+      .on("change", function(){
+        maxLevel = this.value;
+        editorChart.onGeneratorChange()(lastGenerator);
+        d3.selectAll("#bigPreview").call(bigChart);
+      });
+
+
+      d3.select("#rotatePreview")
+      .on("change", function(){
+        angle = this.value;
+        bigChart.angle(angle);
+        d3.selectAll("#bigPreview").call(bigChart);
+      });
+
+      d3.select("#showTriangle")
+      .on("change", function(){
+        bigChart.showTriangle(this.checked);
+        d3.selectAll("#bigPreview").call(bigChart);
+      });
+
+      d3.select("#btnSave")
+      .on("click",function() {
+        var data = d3.selectAll("#bigPreview path")[0].map(function(d){return d.attributes.d.value;});
+        var dataFields = d3.select("#formSave").selectAll("input.data").data(data);
+        dataFields.enter().append("input")
+        .attr("class", "data")
+        .attr("type", "hidden")
+        .attr("name", function(d,i) {return "polygon"+i;});
+
+        dataFields
+        .attr("value", function(d,i) {return d;});
+
+        dataFields.exit().remove();
+
+        d3.select("#formSave").node().submit();
+      });
+
+
+      editorSvg.call(editorChart);
+    });
+}
+
+chart.width = function(_) {
+  if (!arguments.length) return width;
+  else width = +_;
+  return chart;
+};
+chart.height = function(_) {
+  if (!arguments.length) return height;
+  else height = +_;
+  return chart;
+};
+return chart;
+};
+
+</script>
+
+<div class="container" id="topContainer">
+  <div class="row">
+    <div class="eight columns">
+      <figure id="editor">
+      </figure>
+    </div>
+    <div class="eight columns">
+      <figure>
+        <div><svg id="bigPreview"></svg>
+        </div>
+        <div id="previewToolbar">
+          <label>
+            Rotate 
+            <input id="rotatePreview" type="range" min="-180" max="180" step="1" value="0"/>
+          </label>
+          <label>
+            # Iterations
+            <input id="numPreviewLevel" type="number" min="0" max="20" value="3"/>
+          </label>
+          <label>
+            Show triangle (Nya Stugan-mode)
+            <input id="showTriangle" type="checkbox" />
+          </label>
+            <input id="btnSave" type="button" class="button-primary" value="Save .svg"/>
+        </div>
+      </figure>
+    </div>
+  </div>
+  <div class="row">
+    <div class="twelwe columns">
+      <p>
+        This is a fractal spiral generator. You decide how the spiral branches into new spirals with the controls to the left. After several iterations you have the result in the right panel.
+      </p>
+      <p>
+        <b>Add, remove, move and flip branches</b> by the controls below the left panel. <b>Scroll and pan</b> in the right preview-panel. <b>Click the Save-button</b> to download a svg vector file.
+      </p>
+
+    </div>
+  </div>
+
+</div>
+
+<script type="text/javascript">
+  d3.select("#topContainer").call(fractals.fractalEditor());
+</script>
+
+
+
+
+
+</body>
+</html> 
