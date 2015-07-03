@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Fractal Spiral Generator</title>
+  <title>Fractal Curve Generator (D3.js)</title>
   <meta name="description" content="">
   <meta name="author" content="">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -29,9 +29,13 @@
   <meta name="theme-color" content="#ffffff">
 
   <script src="/js/lib/d3-3.5.5.min.js"></script>
+  <script src="/js/lib/FileSaver.min.js"></script>
+
 
 <style>
-
+#topContainer {
+  padding-top: 20px;
+}
 
 path.line {
   fill: none;
@@ -98,9 +102,12 @@ path.grid {
 
 circle#newPoint {cursor: crosshair;}
 
-#previewToolbar > label, #previewToolbar > input {
+#previewToolbar label, #previewToolbar input {
     display: inline;
-    margin-right: 20px;
+    margin-right: 10px;
+}
+#numPreviewLevel {
+  width: 100px;
 }
 
 
@@ -714,11 +721,7 @@ fractals.fractalEditor = function() {
       var smallChart = fractals.linePlot()
                         .width(115).height(115);
       var bigChart = fractals.linePlot()
-                      .width(400).height(400).interpolation("basis")
-                      .onDraw(function(linedata,transformdata){
-                        d3.select("#exportformline").attr("value", linedata);
-                        d3.select("#exportformtransform").attr("value", transformdata);
-                      });
+                      .width(400).height(400).interpolation("basis");
 
       editorChart.onGeneratorChange(function(generator) {
         lastGenerator = generator;
@@ -768,6 +771,29 @@ fractals.fractalEditor = function() {
             d3.selectAll("#bigPreview").call(bigChart);
         });
 
+
+      d3.select("#btnSave")
+      .on("click",function() {
+        var data = d3.selectAll("#bigPreview path")[0].map(function(d){return {d: d.attributes.d.value, transform: d.attributes.transform.value};});
+
+        var svgText = '<svg version="1.1" baseProfile="full" width="400" height="400" xmlns="http://www.w3.org/2000/svg">';
+        data.forEach(function(d) {
+          var str = '<path fill="none" stroke="#000000" stroke-width="2px" d="';
+          str += d.d;
+          str += '" transform="';
+          str += d.transform;
+          str += '"></path>';
+          svgText += str;
+        });
+        svgText += '</svg>';
+
+        var blob = new Blob([svgText], {type: "image/svg+xml;charset=utf-8"});
+        saveAs(blob, "fractal-curve.svg");
+
+      });
+
+
+
       editorSvg.call(editorChart);
     });
   }
@@ -784,6 +810,8 @@ fractals.fractalEditor = function() {
  };
  return chart;
 };
+
+
 
 </script>
 
@@ -812,28 +840,32 @@ fractals.fractalEditor = function() {
 </div>
 <div id="previewToolbar">
 <label>
-Level 
+Iterations 
 <input id="numPreviewLevel" type="number" min="1" max="15" value="4"/>
 </label>
 <label><input type="checkbox" id="chkInterpolation" checked> Interpolation</label>
-<form action="/fractals/curve.svg" method="POST">
-<input type="hidden" id="exportformline" name="d" value=""/>
-<input type="hidden" id="exportformtransform" name="transform" value=""/>
-<input type="submit" class="button-primary" value="Save .svg"/>
-</form>
+<input type="button" id="btnSave" class="button-primary" value="Save .svg"/>
 </div>
 </figure>
 </div>
 </div>
 <div class="row">
     <div class="twelwe columns">
+        <h1>Instructions</h1>
+        <p>
+        <b>Click and drag nodes</b> to select and move them around. <b>Hit DELETE</b> to remove the selected node. <b>Click nearby a segment</b> to insert a new node on it. <b>Click on a segment</b> to flip its direction. 
+        </p>
+        
         <h1>What's this?</h1>
         <p>
         This is a fractal curve generator. You make a connected sequence of line segments, the <i>generator</i>, on the grid to the left. Each of your segments is replaced with a new copy of the whole, again and again. After a few iterations (the fractal <i>level</i>) you get the curve to the right. Each segment in the generator has a direction (the little arrow) which determines how the new copy is oriented.
         </p>
-        <p>
-        <b>Click and drag nodes</b> to select and move them around. <b>Hit DELETE</b> to remove the selected node. <b>Click nearby a segment</b> to insert a new node on it. <b>Click on a segment</b> to flip its direction. 
-        </p>
+        <h2>Made with</h2>
+        <ul>
+        <li><a href="http://d3js.org/">D3.js</a></li>
+        <li><a href="http://getskeleton.com/">skeleton.css</a></li>
+        <li><a href="https://github.com/eligrey/FileSaver.js/">FileSaver.js</a></li>
+        </ul>
     </div>
 </div>
 </div>

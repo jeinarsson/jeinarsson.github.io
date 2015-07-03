@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Fractal Spiral Generator</title>
+  <title>Fractal Spiral Generator (D3.js)</title>
   <meta name="description" content="">
   <meta name="author" content="">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -29,7 +29,9 @@
   <meta name="theme-color" content="#ffffff">
 
   <script src="/js/lib/d3-3.5.5.min.js"></script>
+  <script src="/js/lib/FileSaver.min.js"></script>
   <style>
+
     #topContainer {
       padding-top: 20px;
     }
@@ -75,9 +77,13 @@
 
     circle#newPoint {cursor: crosshair;}
 
-    #previewToolbar input {
-      margin:10px;
+    #previewToolbar input, #previewToolbar label {
+      margin-right:10px;
+      display:inline;
     }
+  #numPreviewLevel {
+    width: 100px;
+  }
 
 
     .gt-remove, .gt-add {
@@ -660,18 +666,19 @@ fractals.fractalEditor = function() {
       d3.select("#btnSave")
       .on("click",function() {
         var data = d3.selectAll("#bigPreview path")[0].map(function(d){return d.attributes.d.value;});
-        var dataFields = d3.select("#formSave").selectAll("input.data").data(data);
-        dataFields.enter().append("input")
-        .attr("class", "data")
-        .attr("type", "hidden")
-        .attr("name", function(d,i) {return "polygon"+i;});
 
-        dataFields
-        .attr("value", function(d,i) {return d;});
+        var svgText = '<svg version="1.1" baseProfile="full" width="400" height="400" xmlns="http://www.w3.org/2000/svg">';
+        data.forEach(function(d) {
+          var str = '<path fill="none" stroke="#000000" stroke-width="2px" d="';
+          str += d;
+          str += '"></path>';
+          svgText += str;
+        });
+        svgText += '</svg>';
 
-        dataFields.exit().remove();
+        var blob = new Blob([svgText], {type: "image/svg+xml;charset=utf-8"});
+        saveAs(blob, "fractal-spirals.svg");
 
-        d3.select("#formSave").node().submit();
       });
 
 
@@ -714,7 +721,7 @@ return chart;
             <input id="numPreviewLevel" type="number" min="0" max="20" value="3"/>
           </label>
           <label>
-            Show triangle (Nya Stugan-mode)
+            Nya Stugan-mode
             <input id="showTriangle" type="checkbox" />
           </label>
             <input id="btnSave" type="button" class="button-primary" value="Save .svg"/>
@@ -724,12 +731,21 @@ return chart;
   </div>
   <div class="row">
     <div class="twelwe columns">
-      <p>
-        This is a fractal spiral generator. You decide how the spiral branches into new spirals with the controls to the left. After several iterations you have the result in the right panel.
-      </p>
+        <h1>Instructions</h1>
       <p>
         <b>Add, remove, move and flip branches</b> by the controls below the left panel. <b>Scroll and pan</b> in the right preview-panel. <b>Click the Save-button</b> to download a svg vector file.
       </p>
+        <h1>What's this?</h1>
+
+      <p>
+        This is a fractal spiral generator. You decide how the spiral branches into new spirals with the controls to the left. After several iterations you have the result in the right panel.
+      </p>
+        <h2>Made with</h2>
+        <ul>
+        <li><a href="http://d3js.org/">D3.js</a></li>
+        <li><a href="http://getskeleton.com/">skeleton.css</a></li>
+        <li><a href="https://github.com/eligrey/FileSaver.js/">FileSaver.js</a></li>
+        </ul>
 
     </div>
   </div>
