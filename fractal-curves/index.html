@@ -10,29 +10,39 @@
   <link rel="stylesheet" href="/css/skeleton-wide.css">
   <link rel="stylesheet" href="/css/font-awesome.min.css">
 
-  <link rel="apple-touch-icon" sizes="57x57" href="/apple-touch-icon-57x57.png">
-  <link rel="apple-touch-icon" sizes="60x60" href="/apple-touch-icon-60x60.png">
-  <link rel="apple-touch-icon" sizes="72x72" href="/apple-touch-icon-72x72.png">
-  <link rel="apple-touch-icon" sizes="76x76" href="/apple-touch-icon-76x76.png">
-  <link rel="apple-touch-icon" sizes="114x114" href="/apple-touch-icon-114x114.png">
-  <link rel="apple-touch-icon" sizes="120x120" href="/apple-touch-icon-120x120.png">
-  <link rel="apple-touch-icon" sizes="144x144" href="/apple-touch-icon-144x144.png">
-  <link rel="apple-touch-icon" sizes="152x152" href="/apple-touch-icon-152x152.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon-180x180.png">
-  <link rel="icon" type="image/png" href="/favicon-32x32.png" sizes="32x32">
-  <link rel="icon" type="image/png" href="/android-chrome-192x192.png" sizes="192x192">
-  <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96">
-  <link rel="icon" type="image/png" href="/favicon-16x16.png" sizes="16x16">
-  <link rel="manifest" href="/manifest.json">
-  <meta name="msapplication-TileColor" content="#2b5797">
-  <meta name="msapplication-TileImage" content="/mstile-144x144.png">
-  <meta name="theme-color" content="#ffffff">
+<link rel="apple-touch-icon" sizes="57x57" href="/fractal-curves/icons/apple-touch-icon-57x57.png">
+<link rel="apple-touch-icon" sizes="60x60" href="/fractal-curves/icons/apple-touch-icon-60x60.png">
+<link rel="apple-touch-icon" sizes="72x72" href="/fractal-curves/icons/apple-touch-icon-72x72.png">
+<link rel="apple-touch-icon" sizes="76x76" href="/fractal-curves/icons/apple-touch-icon-76x76.png">
+<link rel="apple-touch-icon" sizes="114x114" href="/fractal-curves/icons/apple-touch-icon-114x114.png">
+<link rel="apple-touch-icon" sizes="120x120" href="/fractal-curves/icons/apple-touch-icon-120x120.png">
+<link rel="apple-touch-icon" sizes="144x144" href="/fractal-curves/icons/apple-touch-icon-144x144.png">
+<link rel="apple-touch-icon" sizes="152x152" href="/fractal-curves/icons/apple-touch-icon-152x152.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/fractal-curves/icons/apple-touch-icon-180x180.png">
+<link rel="icon" type="image/png" href="/fractal-curves/icons/favicon-32x32.png" sizes="32x32">
+<link rel="icon" type="image/png" href="/fractal-curves/icons/android-chrome-192x192.png" sizes="192x192">
+<link rel="icon" type="image/png" href="/fractal-curves/icons/favicon-96x96.png" sizes="96x96">
+<link rel="icon" type="image/png" href="/fractal-curves/icons/favicon-16x16.png" sizes="16x16">
+<link rel="manifest" href="/fractal-curves/icons/manifest.json">
+<link rel="shortcut icon" href="/fractal-curves/icons/favicon.ico">
+<meta name="apple-mobile-web-app-title" content="Fractal Curve Generator">
+<meta name="application-name" content="Fractal Curve Generator">
+<meta name="msapplication-TileColor" content="#da532c">
+<meta name="msapplication-TileImage" content="/fractal-curves/icons/mstile-144x144.png">
+<meta name="msapplication-config" content="/fractal-curves/icons/browserconfig.xml">
+<meta name="theme-color" content="#ffffff">
 
   <script src="/js/lib/d3-3.5.5.min.js"></script>
   <script src="/js/lib/FileSaver.min.js"></script>
 
 
 <style>
+.overlay {
+  fill: none;
+  pointer-events: all;
+  cursor: move;
+}
+
 #topContainer {
   padding-top: 20px;
 }
@@ -615,20 +625,21 @@ fractals.linePlot = function() {
   var margin = { top: 0, right: 0, bottom: 0, left: 0 };
 
   var interpolation = "linear";
-  var onDraw = null;
   var angle = 0;
 
+  var yscale = d3.scale.linear()
+      .domain([-0.75,0.75]);
+  var xscale = d3.scale.linear()
+      .domain([-0.25,1.25]);
+  
   function chart(selection) {
     selection.each(function(data) {
 
       var totalWidth = width+margin.left+margin.right, 
           totalHeight = height+margin.top+margin.bottom;
 
-      var yscale = d3.scale.linear()
-          .range([height, 0]).domain([-0.75,0.75]);
-      var xscale = d3.scale.linear()
-          .range([0,width]).domain([-0.25,1.25]);
-
+      yscale.range([height, 0]);
+      xscale.range([0,width]);
 
       var parent = d3.select(this);
       parent
@@ -642,25 +653,35 @@ fractals.linePlot = function() {
 
       var line = d3.svg.line()
                   .x(function(d){return xscale(d[0]);})
-                  .y(function(d){return yscale(d[1]);})
-                  .interpolate(interpolation);
+                  .y(function(d){return yscale(d[1]);});
 
 
-      var linedata = line(data);
-      var transformdata = "rotate("+ angle + ","+xscale(0.5)+","+yscale(0)+")";
 
-      if (onDraw) onDraw(linedata, transformdata);
-
-      var path = top.selectAll("path").data([0]);
+      var path = top.selectAll("path").data([{d:data, a:angle, interpolation: interpolation}]);
       path.enter()
         .append("path").attr("class", "line");
-      path.attr("transform", transformdata);
+      path.attr("transform", function(d){return "rotate("+ d.a + ","+xscale(0.5)+","+yscale(0)+")";});
+      path.attr("d", function(d) {return line.interpolate(d.interpolation)(d.d);});
+      path.exit().remove();
 
-
-
-
-      path.attr("d", line(data));
-
+      var overlay = parent.selectAll("rect").data([0]);
+      overlay.enter()
+      .append("rect")
+      .attr("class", "overlay")
+      .attr("x", margin.left)
+      .attr("y", margin.top)  
+      .attr("width", width)
+      .attr("height", height)
+      .call(d3.behavior.zoom()
+        .x(xscale)
+        .y(yscale)
+        .scaleExtent([0.2, 5])
+        .on("zoom", function() {
+          top.selectAll("path")
+          .attr("d", function(d) {return line.interpolate(d.interpolation)(d.d);})
+          .attr("transform",function(d){return "rotate("+ d.a + ","+xscale(0.5)+","+yscale(0)+")";});
+        })
+        );      
     });
   }
 
@@ -684,11 +705,6 @@ fractals.linePlot = function() {
     else interpolation = _;
     return chart;
  };
-  chart.onDraw = function(_) {
-    if (!arguments.length) return onDraw;
-    else onDraw = _;
-    return chart;
- };
 
  return chart;
 };
@@ -707,10 +723,6 @@ fractals.fractalEditor = function() {
 
   function chart(selection) {
     selection.each(function(data) {
-
-
-
-
       var parent = d3.select(this);
 
       var lastGenerator = null;
@@ -853,7 +865,7 @@ Iterations
     <div class="twelwe columns">
         <h1>Instructions</h1>
         <p>
-        <b>Click and drag nodes</b> to select and move them around. <b>Hit DELETE</b> to remove the selected node. <b>Click nearby a segment</b> to insert a new node on it. <b>Click on a segment</b> to flip its direction. 
+        <b>Click and drag nodes</b> to select and move them around. <b>Hit DELETE</b> to remove the selected node. <b>Click nearby a segment</b> to insert a new node on it. <b>Click on a segment</b> to flip its direction. <b>Pan and zoom</b> in the preview pane.
         </p>
         
         <h1>What's this?</h1>
