@@ -108,6 +108,10 @@
       max-width: 100px;
     }
 
+    #gt-chubbyness {
+      margin-bottom: 10px;
+    }
+
     #toolbar table {
       width: 100%;
     }
@@ -220,9 +224,10 @@ function transformFromInput(input) {
     transform: transform
   };
 }
-var baseShape = (function(){
 
-  var startWidth = 0.1;
+var shapeStartWidth = 0.1;
+function makeBaseShape(startWidth) {
+
   var numSubdivisions = 100;
 
   var result = [];
@@ -242,9 +247,9 @@ var baseShape = (function(){
   }
   return result;
 
-})();
+}
 
-
+var baseShape = null;
 
 fractals.transformShape = function(path, generator) {
   var p0 = generator.p0;
@@ -273,7 +278,6 @@ fractals.generatorEditor = function() {
 
   var width = 400, height = 400;
   var margin = { top: 0, right: 0, bottom: 0, left: 0 };
-
 
   var onGeneratorChange = function() {return;};
 
@@ -304,6 +308,19 @@ fractals.generatorEditor = function() {
       var parent = figure.append("svg");
 
       var toolbar = figure.append("div").attr("id","toolbar");
+      toolbar.append("label").html("Chubbyness: ").append("input")
+        .attr("id", "gt-chubbyness")
+        .attr("class", "gt-s")
+        .attr("type", "range")
+        .attr("min", 0.0)
+        .attr("max", 0.3)
+        .attr("step", 0.01)
+        .on("change", function(d) {
+          shapeStartWidth = this.value;
+          recompute();
+          redraw();
+        });
+
       var toolbarTable = toolbar.append("table");
       toolbarTable.append("thead").html('<tr><th>Position</th><th>Size</th><th>Flip</th><th>Remove</th></tr>');
       var generatorToolbar = toolbarTable.append("tbody");
@@ -340,19 +357,21 @@ fractals.generatorEditor = function() {
 
 
       var generatorShapePathGroup = top.selectAll("g.generators").data([0])
-      .enter().append("g").attr("class","generators");
+        .enter().append("g").attr("class","generators");
 
-      var baseShapePath = top.selectAll("path.baseShape").data([baseShape]).enter()
-      .append("path").attr("class", "baseShape shape")
-      .attr("d", line);
 
       function recompute() {
+        baseShape = makeBaseShape(shapeStartWidth);
         generators = inputs.map(transformFromInput); 
         generatorShapes = generators.map(function(g) {return fractals.transformShape(baseShape,g);});
         onGeneratorChange(generators);
       }
 
       function redraw() {
+
+        var baseShapePath = top.selectAll("path.baseShape").data([baseShape]);
+        baseShapePath.enter().append("path").attr("class", "baseShape shape");
+        baseShapePath.attr("d", line);
 
         var generatorShapePaths = generatorShapePathGroup.selectAll("path.generator").data(generatorShapes);
         generatorShapePaths.enter().append("path")
@@ -658,7 +677,13 @@ fractals.fractalEditor = function() {
         angle = this.value;
         bigChart.angle(angle);
         d3.selectAll("#bigPreview").call(bigChart);
+      })
+      .on("keyup", function(){
+        angle = this.value;
+        bigChart.angle(angle);
+        d3.selectAll("#bigPreview").call(bigChart);
       });
+
 
       d3.select("#showTriangle")
       .on("change", function(){
