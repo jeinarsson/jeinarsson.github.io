@@ -1,0 +1,104 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="x-ua-compatible" content="ie=edge">
+        <title>Visualizing paths as flows in a Sankey diagram — jonaseinarsson.se</title>
+        <meta name="description" content="Jonas Einarsson's resume">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        
+        <link rel="apple-touch-icon" href="icon.png">
+        <!-- Place favicon.ico in the root directory -->
+
+        <link rel="stylesheet" href="../static/normalize.css">
+        <link rel="stylesheet" href="../static/fonts.css">
+        <link rel="stylesheet" href="../static/page.css">
+        <link rel="stylesheet" href="../static/katex.min.css">
+        <script defer src="../static/fontawesome-all.min.js"></script>
+        <script src="../static/katex.min.js"></script>
+        <script src="../static/auto-render.min.js"></script>
+
+        <script type="text/javascript" src="d3-3.5.5.min.js"></script>
+<script type="text/javascript" src="d3-tip-0.6.7.js"></script>
+<script type="text/javascript" src="pathSankey.js"></script>
+<script type="text/javascript" src="examples.js"></script>
+<link rel="stylesheet" href="pathSankey.css">
+            
+    </head>
+    <body>
+    <div class="paper shadow-box">
+    <p><a href="/">&larr; Back to jonaseinarsson.se</a></p>
+    
+  <h1>Visualizing paths as flows in a Sankey diagram</h1>
+  <p>I made an <a href="http://demokratikollen.se/forslagen/reinfeldt2">interactive visualization</a> (Swedish) of the flow of proposals (bills) and decisions in the Swedish parliament. The visualization combines features of a straightforward Tree (path visualization) with those of a Sankey diagram (flow visualization).</p>
+<p>Here's a screenshot, click on it to go to the full version:</p>
+<figure>
+<a href="http://demokratikollen.se/forslagen/reinfeldt2"><img src="screenshot.png"/></a>
+<p>Click to go to live version (demokratikollen.se)</p>
+</figure><p>I'm quite satisfied with how it turned out, and the remainder of this post is a brief description of what I did and what I'd do differently the next time.</p>
+<p>The main idea is to show <em>both</em> the Tree and the Sankey in the same figure, at the same time. I will explain this precisely below, but first I will describe what type of data we are dealing with.</p>
+<h2>The data: proposal paths</h2>
+<p>In the Swedish Parliament a <em>proposal</em> is submitted by a member, a party or the government. After submission the proposal is considered by a <em>committee</em> which prepares a simple yes/no question for the parliament to vote on. The vote renders a final <em>decision</em> to reject or accept the proposal.</p>
+<p>The data I have are all <em>paths</em>: <em>Proposal source</em> -&gt; <em>Committee</em> -&gt; <em>Decision</em>. There is one path for each proposal, and there are around 50,000 proposals during a 4-year period. Many proposals take the same path, for example in 2010-2014 the <em>Social democrats</em> submitted 498 proposals which were considered by the <em>Foreign affairs committee</em> and then <em>rejected</em>. The <em>government</em> submitted 125 proposals which went through the <em>Traffic committee</em> and were <em>accepted</em>, and so on.</p>
+<p>The data I visualize are the number of proposals on each path.</p>
+<p>This type of data are weighted paths on a graph, and therefore represents sequences of events in general. For instance, <a href="http://bl.ocks.org/kerryrodden/7090426">navigation paths</a> on a website is an important example of such data. But also things like character and word sequences in linguistics, or call stack traces in computing could be fun to look at.</p>
+<p>In my case with the proposals, the graph is very simple: three "layers" without internal connections, and no loops. However, the main idea presented here should work for other types of graphs, too.</p>
+<h2>The (false) dichotomy: Visualize paths or flows</h2>
+<p>For clarity in the following examples I use mock data with fewer nodes and paths than the original. The numbers are made up.</p>
+<p>If we visualize all the paths we get a <em>Tree</em> (with multiple roots). Like this:</p>
+<figure>
+<svg id="figExamplePaths" viewBox='0 0 450 250' preserveAspectRatio="xMinYMin meet" width="450" height="250"/>
+<p>The "government" node is pre-selected, click on nodes to see their connections.</p>
+</figure><p>The Tree shows all the data, and therefore renders many nodes. The number of nodes in the last layer is the number of sources $$ \times $$ number of committees $$ \times $$ number of decisions. In the real data this amounts to roughly 400 nodes. The Tree may be a good alternative for smaller datasets, or with additional filtering.</p>
+<p>On the other hand, if we show the nodes only once and aggregate the paths between them into flows we get a <em>Sankey</em> diagram. Like this:</p>
+<figure>
+<svg id="figExampleFlows" viewBox='0 0 450 250' preserveAspectRatio="xMinYMin meet" width="450" height="250"/>
+<p>The "government" node is pre-selected, click on nodes to see their connections.</p>
+</figure><p>The Sankey is less cluttered and correctly shows the magnitude of the flow between any two nodes. But aggregating paths into flows destroys information about longer paths: you can see the magnitude of the flow between the <em>Government</em> node and the <em>Traffic</em> committee, but you can not see how many of those were <em>Accepted</em> or <em>Rejected</em>. Compare to the Tree above, where this path information is present, but illegible as the number of nodes explodes.</p>
+<h2>Resolution: Visualize both paths and flows</h2>
+<p>My attempt at this problem is to draw the full Tree, but make it look like the Sankey. Think of it as taking the Tree figure above, and carefully arranging the positions of all the paths so that it looks like the Sankey figure. Like this:</p>
+<figure>
+<svg id="figExampleSankey" viewBox='0 0 450 250' preserveAspectRatio="xMinYMin meet" width="450" height="250"/>
+<p>The "government" node is pre-selected, click on nodes to see their connections.</p>
+</figure><p>The path structure is revealed when the user selects one of the nodes. Selecting a node highlights all paths passing through that node. Therefore we clearly see the flow from the <em>Government</em> node to the <em>Traffic</em> committee, and then also how that flow splits into one part to <em>Accepted</em> and one part to <em>Rejected</em>. By arranging the Tree to look like a Sankey we lift some of the initial cognitive load for the user, while allowing them to browse a richer dataset once they grasp what they are looking at. In my original figure I use this "path Sankey" as an overview. When user selects a node, all its paths are highlighted and a detail view is triggered to show a list of the relevant proposals.</p>
+<p>There is a drawback which I have not found any solution to: arranging the paths to look like the Sankey disrupts the visual continuity of the paths (seen when highlighted). The path, say, <em>Government</em> -&gt; <em>Traffic committee</em> -&gt; <em>Rejected</em> is visually discontinuous at the committee node. This drawback is most obvious with small and moderate datasets, like in these examples. The visual disruption is diminished when there are more nodes and smaller flows, like in the <a href="http://demokratikollen.se/forslagen/reinfeldt2">original figure</a> where I think it works all right.</p>
+<p>This method works for paths with three steps. If additional layers are shown, the visual "memory" only reaches two steps back. Nevertherless, the two steps are an improvement over the original Sankey's single step memory.</p>
+<h2>What should be improved</h2>
+<p><a href="https://github.com/jeinarsson/pathSankey">My implementation</a> of this figure in D3.js works well, but it has a number of flaws which I think should be addressed:</p>
+<h3>1. Partition both nodes and flows</h3>
+<p>My implementation partitions the Sankey flows into the parts from the Tree representation, but the nodes are still monolithic.</p>
+<p>To fully carry through the thought of "rearranging the Tree into a Sankey", the Sankey nodes should be made by stacking the corresponding small nodes in the Tree. This would allow for more precise highlighting during user interactions.</p>
+<p>This may enhance the visual discontinuity discussed above, nevertheless I believe it's worth trying.</p>
+<h3>2. Better rendering</h3>
+<p>My implementation literally renders the elements of the Tree, rearranged into a Sankey. This unfortunately results in</p>
+<ul>
+<li>Lots of <code>&lt;path&gt;</code> elements, making rendering slower,</li>
+<li>Glitches (seams) between the sub-flows making up the whole (depending on SVG renderer, zoom level etc), and</li>
+<li>The z-order of the flows makes the appearance of highlighted flows in relation to other flows inconsistent.  </li>
+</ul>
+<p>I propose to draw the composite Sankey flows as a single <code>&lt;path&gt;</code> and append/remove the <code>&lt;path&gt;</code> elements representing the highlighted path. This reduces the number of SVG elements, removes the seams and makes z-order consistent.</p>
+<h3>3. More general graphs</h3>
+<p>My implementation is tailored after the particular data I had in mind. Thus the layout is based on <em>layers</em> of <em>node groups</em> of <em>nodes</em>. This makes automatic layout simple and robust, but the code is not flexible enough for many other types of data.</p>
+<p>Therefore, the overall positions of nodes and flows should be determined first, like for a Sankey. This layout step may be automated, by hand, or both. The point is that it is a separate concern to partition these given elements into the sub-flows and sub-nodes necessary for highlighting the underlying path data. This is an algorithmic step which should not require additional input by any designer.</p>
+<h2>Finally</h2>
+<p>Code (MIT Licence) at <a href="http://github.com/jeinarsson/pathSankey">Github</a>.</p>
+<p>There's a minimal example in <a href="http://bl.ocks.org/jeinarsson/4e748e4bfe42d4f52ae9">a bl.ocks here</a> and a more advanced example with randomized data in <a href="http://bl.ocks.org/jeinarsson/e37aa55c3b0e11ae6fa1">another bl.ocks here</a>.</p>
+<p>For more code, see the source of this page and of the <a href="http://demokratikollen.se/forslagen/reinfeldt2">original interactive visualization</a>.</p>
+<p>If you found this post interesting, you will also like <a href="http://elijahmeeks.com/#content/blog/2015_06_10_sankey">a short piece by Elijah Meeks</a> on Sankey diagrams for path visualization at Netflix.</p>
+<script type="text/javascript">
+    initializeExamples();
+</script>
+        
+    <p><a href="/">&larr; Back to jonaseinarsson.se</a> | <a href="mailto:me@jonaseinarsson.se"><i class="far fa-envelope"></i>&nbsp;me@jonaseinarsson.se</a></p>
+    </div>   
+<script>
+renderMathInElement(document.body,
+    {
+        delimiters: [
+                      {left: "$$", right: "$$", display: false},
+                      {left: "\\[", right: "\\]", display: true}
+                    ]
+    });
+</script>         
+    </body>
+</html>

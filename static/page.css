@@ -1,0 +1,112 @@
+body {
+    background-color: #ededed;
+    color: #333;
+    font-size: 14px;
+    font-family: "Droid Serif", serif;
+    line-height: 1.5;
+}
+
+.shadow-box {
+    -webkit-box-shadow: 0px 2px 3px 1px #A69791;
+    -moz-box-shadow: 0px 2px 3px 1px #A69791;
+    box-shadow: 0px 2px 3px 1px #A69791;
+}
+
+#online-note {
+    display: none;
+}
+
+div.paper {
+    background-color: #fafafa;
+    color: #222;
+    width: 668px;
+    margin-left: auto;
+    margin-right: auto;
+
+    margin-top: 10px;
+    margin-bottom: 100px;
+    
+    padding-bottom: 50px;
+    padding-top: 20px;
+    padding-left: 50px;
+    padding-right: 50px;
+}
+div.paper > p {
+    margin-bottom:30px;
+}
+a {
+    color: #3a3a3a;
+}
+a:hover {
+    color: #2A5DB0;
+}
+
+
+header {
+    padding-top: 0px;
+    padding-bottom: 0px;
+    padding-left: 50px;
+    padding-right: 0px;
+    margin-bottom: 10px;
+}
+
+
+figure {
+    display:block;
+    margin-left:auto;
+    margin-right:auto;
+    text-align: center;
+}
+figure img {
+    max-width: 500px;
+    margin-bottom: .5rem;
+}
+figure p {
+    margin-top:0;
+    font-size: .8rem;
+}
+
+
+
+@media screen and (max-width: 768px) {
+div.paper {
+    width: calc(100% - 100px);
+    margin-left:0px;
+    margin-right:0px;
+}
+}
+
+@media screen and (max-width: 375px) {
+div.paper {    
+    width: calc(100% - 20px);
+    padding-left: 10px;
+    padding-right: 10px;
+}
+}
+
+@media print {
+
+@page {
+  margin: 0;
+}
+div.paper {
+    margin: 0pt;
+    width: unset;
+    height: unset;
+    background-color: white;
+}
+.shadow-box {
+    -webkit-box-shadow: unset;
+    -moz-box-shadow: unset;
+    box-shadow: unset;
+    background-color: white;
+}
+#online-note {
+    display: inline;
+    position: absolute;
+    left: 8pt;
+    top: 8pt;
+}
+}
+
+

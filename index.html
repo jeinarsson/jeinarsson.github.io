@@ -1,113 +1,185 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <title>Jonas Einarsson</title>
-  <meta name="description" content="">
-  <meta name="author" content="">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="x-ua-compatible" content="ie=edge">
+        <title>Jonas Einarsson - jonaseinarsson.se</title>
+        <meta name="description" content="Jonas Einarsson's resume">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <link rel="stylesheet" href="/css/skeleton.css">
-  <link rel="stylesheet" href="/css/font-awesome.min.css">
+        <link rel="apple-touch-icon" href="icon.png">
+        <!-- Place favicon.ico in the root directory -->
 
-  
+        <link rel="stylesheet" href="./static/picnic.min.css">
+        <link rel="stylesheet" href="./static/fonts.css">
+        <link rel="stylesheet" href="./static/main.css">
+        <link rel="stylesheet" href="./static/katex.min.css">
 
-  
+        <script defer src="./static/fontawesome-all.min.js"></script>
+        <script src="./static/katex.min.js"></script>
+        <script src="./static/auto-render.min.js"></script>
+    </head>
+    <body>
+    <div class="hero">
 
-  
+    <div class="content">
+    	<h1>Hi, I'm Jonas.</h1>
+    	<img src="/static/img/portrait.png" alt="Jonas Einarsson"/>
+    	<p>I'm an engineering physicist with a knack for coding.</p>
+    	<p class="links">
+    		<a href="mailto:me@jonaseinarsson.se"><i class="far fa-envelope"></i>&nbsp;me@jonaseinarsson.se</a> | 
+    		<a href="https://www.linkedin.com/in/jonas-einarsson/"><i class="fab fa-linkedin"></i>&nbsp;LinkedIn</a> | 
+    		<!--<a href="/resume"><i class="far fa-file-alt"></i>&nbsp;Resume</a> | -->
+    		<a href="https://scholar.google.se/citations?hl=en&user=Mfb_hjwAAAAJ&view_op=list_works"><i class="fas fa-graduation-cap"></i>&nbsp;Publications</a>
+    	</p>
+    </div>  
 
-<link rel="apple-touch-icon" sizes="57x57" href="/apple-touch-icon-57x57.png">
-<link rel="apple-touch-icon" sizes="60x60" href="/apple-touch-icon-60x60.png">
-<link rel="apple-touch-icon" sizes="72x72" href="/apple-touch-icon-72x72.png">
-<link rel="apple-touch-icon" sizes="76x76" href="/apple-touch-icon-76x76.png">
-<link rel="apple-touch-icon" sizes="114x114" href="/apple-touch-icon-114x114.png">
-<link rel="apple-touch-icon" sizes="120x120" href="/apple-touch-icon-120x120.png">
-<link rel="apple-touch-icon" sizes="144x144" href="/apple-touch-icon-144x144.png">
-<link rel="apple-touch-icon" sizes="152x152" href="/apple-touch-icon-152x152.png">
-<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon-180x180.png">
-<link rel="icon" type="image/png" href="/favicon-32x32.png" sizes="32x32">
-<link rel="icon" type="image/png" href="/android-chrome-192x192.png" sizes="192x192">
-<link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96">
-<link rel="icon" type="image/png" href="/favicon-16x16.png" sizes="16x16">
-<link rel="manifest" href="/manifest.json">
-<meta name="msapplication-TileColor" content="#2b5797">
-<meta name="msapplication-TileImage" content="/mstile-144x144.png">
-<meta name="theme-color" content="#ffffff">
-</head>
-<body>
-  <div class="container">
-    <div class="full-width columns">
-      <header id="site-header" class="shadow-box">
-        <a href="/"><h1 id="brand">JONASEINARSSON.SE</h1></a>
-        <nav id="nav">
-          <ul>
-            <li><a href="/">POSTS</a></li>
-            <li><a href="/about">ABOUT</a></li>
-            <li><a href="/feed.xml">RSS</a></li>
-          </ul>
-        </nav>
-      </header>
+    <div class="nudge">
+    	<span>Check out some things I've made &amp; written</span><br/>
+    	<i class="fas fa-caret-down"></i>
+    </div>  
+        
     </div>
-    <div class="full-width columns shadow-box">
-      <article>
-  <header>
-    <h1>Posts</h1>
-  </header>
-  <section>
-  <ul>
-    
-      <li>
-          <a href="/2016/biological-computer-graph-reachability-p-np.html">A biological computer, graph reachability, and P=NP</a>
-      </li>
-    
-      <li>
-          <a href="/2016/only-open-access-peer-review.html">Sorry, I only peer-review Open Access papers</a>
-      </li>
-    
-      <li>
-          <a href="/2016/fractal-spirals-d3.html">Interactive Fractal Spiral Generator (d3.js) [DRAFT]</a>
-      </li>
-    
-      <li>
-          <a href="/2016/fractal-curves-d3.html">Interactive Fractal Curve Generator (d3.js) [DRAFT]</a>
-      </li>
-    
-      <li>
-          <a href="/2015/paths-sankey-d3.html">Visualizing paths as flows in a Sankey diagram (D3.js)</a>
-      </li>
-    
-  </ul>
-  </section>
-</article>
 
-    </div>
-    <div class="full-width columns">
-      <footer id="site-footer" class="shadow-box">
-      <ul>
-      <li>
-      <a href="/about"><img src="/images/portrait/midi.png" title="Jonas Einarsson (portrait)" height="120" width="84"/></a>
-      </li>
-      </ul>
-        <ul>
-          <li><a class="footerbutton" href="http://github.com/jeinarsson"><i class="fa fa-fw fa-github"></i>jeinarsson</a></li>
-          <li><a class="footerbutton" href="http://twitter.com/jnsein"><i class="fa fa-fw fa-twitter"></i>@jnsein</a></li>
-          <li><a class="footerbutton" href="mailto:me@jonaseinarsson.se"><i class="fa fa-fw fa-envelope-o"></i>me@jonaseinarsson.se</a></li>
-        </ul>
-      </footer>
-    </div>
-  </div>
+  	<div class="projects">
+  	<div class="flex one two-700">
 
+  	<!--
+	<div>
+	<div class="flex one five-700 project">
+		<div class="image">
+		<a href="/the-house"><img src="./static/img/huset.jpg"/></a>
+		</div>
+		<div class="four-fifth-700">
+		<h3>The house</h3>
+		<p>Me &amp; my family built a house on the farm. From scratch, by hand. Yes, we're all mad. <a href="/the-house">Here's some pics and stories.</a></p>
+		</div>
+	</div> 
+	</div>	
+	-->
+	<div>
+	<div class="flex one five-700 project">
+		<div class="image">
+		<a href="https://github.com/jeinarsson/matte"><img src="./static/img/matte.png"/></a>
+		</div>
+		<div class="four-fifth-700">
+		<h3>Software for symbolic tensor algebra &amp; calculus</h3>
+		<p>Some of my research in theoretical fluid mechanics required large amounts of tensor algebra. I wrote some software to relieve the worst pain. <a href="https://github.com/jeinarsson/matte"><i class="fab fa-github"></i> Code</a> and <a href="https://arxiv.org/abs/1708.05788"><i class="far fa-file-alt"></i> paper (arXiv)</a>.</p>
+		</div>
+	</div> 
+	</div>	
+
+	<div>
+	<div class="flex one five-700 project">
+		<div class="image">
+		<a href="/polplot"><img src="./static/img/polplot.jpg"/></a>
+		</div>
+		<div class="four-fifth-700">
+		<h3>Polar plotter</h3>
+		<p>When I finally got a 3D-printer I just had to design a hanging V-plotter. <a href="/polplot">Here's some pics and info.</a></p>
+		</div>
+	</div> 
+	</div>
+
+ 	<div>
+	<div class="flex one five-700 project">
+		<div class="image">
+		<a href="/unite-centrale-de-huit-bits"><img src="./static/img/sms.jpg"/></a>
+		</div>
+		<div class="four-fifth-700">
+		<h3>Oldschool intro on Sega Master System (2003)</h3>
+		<p>In my youth I was part of the <a href="https://en.wikipedia.org/wiki/Demoscene">demoscene</a>, where I learned much about programming and obscure platforms. With an effort out of proportion to the result we created a one-screen intro that ran on a real Sega Master System. <a href="/unite-centrale-de-huit-bits">Click through for video and credits.</a>
+		</div>
+	</div>	
+	</div>
+
+
+  	<div>
+	<div class="flex one five-700 project">
+		<div class="image">
+		<a href="/biological-computer-p-np"><img src="./static/img/pnas.png"/></a>
+		</div>
+		<div class="four-fifth-700">
+		<h3>A biological computer and P=NP</h3>
+		<p>I wrote a Letter to the Editor of PNAS about a mistaken claim of solving a NP-complete problem. It is remarkable that this mistake survived through editing &amp; peer-review in a top journal. <a href="/biological-computer-p-np">Read more &rarr;</a></p>
+		</div>
+	</div>	
+	</div>
+
+	<!--
+	<div>
+	<div class="flex one five-700 project">
+		<div class="image">
+		<a href="/uwb-antenna"><img src="./static/img/antenna.png"/></a>
+		</div>
+		<div class="four-fifth-700">
+		<h3>Multi-objective optimization of UWB antenna</h3>
+		<p>This was a B.Sc. research project turned into internship at Imego AB. We designed an antenna for an Ultra-Wideband radar (3-10Ghz). I implemented a multi-objective stochastic particle swarm optimization to find the Pareto-optimal front of designs. <a href="/uwb-antenna">Read more &rarr;</a></p>
+		</div>
+	</div> 
+	</div>
+	-->
+
+ 	<div>
+	<div class="flex one five-700 project">
+		<div class="image">
+		<a href="/fractal-curves"><img src="./static/img/fractal-curve.png"/></a>
+		</div>
+		<div class="four-fifth-700">
+		<h3>Interactive fractal curve generator (D3.js)</h3>
+		<p>Like most engineers I have an affair with fractals every now and then. This one coincided with learning D3.js and resulted in a surprisingly fun tool. <a href="/fractal-curves">Go ahead, try it.</a></p>
+		</div>
+	</div>	
+	</div>
+ 	<div>
+	<div class="flex one five-700 project">
+		<div class="image">
+		<a href="/fractal-spirals"><img src="./static/img/fractal-spiral.png"/></a>
+		</div>
+		<div class="four-fifth-700">
+		<h3>Interactive fractal spiral generator (D3.js)</h3>
+		<p>I made this because I toyed with the idea of decorative fractal patterns for the house. That never happened, but the tool exists. <a href="/fractal-spirals">Check it out.</a></p>
+		</div>
+	</div>	
+	</div>	
+
+	<div>
+	<div class="flex one five-700 project">
+		<div class="image">
+		<a href="http://demokratikollen.se"><img src="./static/img/demokratikollen.png"/></a>
+		</div>
+		<div class="four-fifth-700">
+		<h3>Demokratikollen.se</h3>
+		<p>Me and three friends wanted to visualize the open data from the Swedish parliament, with lofty hopes of giving an unconventional view into the workings of power. Unsurprisingly it turned into 90&percnt; data cleaning and 10&percnt; visualization. The site is live although we did not clean the data for the last few years :(
+<a href="https://github.com/demokratikollen/demokratikollen"><i class="fab fa-github"></i> Code</a> and <a href="http://demokratikollen.se"><i class="fas fa-home"></i> site</a></p>
+		</div>
+	</div> 
+	</div>
+
+ 
+
+
+  	<div>
+	<div class="flex one five-700 project">
+		<div class="image">
+		<a href="/paths-as-sankey"><img src="./static/img/sankey.png"/></a>
+		</div>
+		<div class="four-fifth-700">
+		<h3>Visualizing paths as flows in a Sankey diagram</h3>
+		<p>
+		When building demokratikollen.se I wanted to visualize the paths of proposals in the Swedish parliament, from a source (e.g. a party), through a committee (e.g. the tax committee), to a decision by vote (yes/no). <a href="/paths-as-sankey">Read about my solution here.</a>
+		</p>
+		</div>
+	</div>	
+	</div>
+
+
+
+  	
+</div>
+</div>
 <script>
-  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-
-  ga('create', 'UA-62955302-1', 'auto');
-  ga('send', 'pageview');
-
-</script>  
-
-
+renderMathInElement(document.body);
+</script>    
 </body>
 </html>

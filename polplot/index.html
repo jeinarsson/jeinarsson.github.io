@@ -1,0 +1,81 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="x-ua-compatible" content="ie=edge">
+        <title>Polar Plotter — jonaseinarsson.se</title>
+        <meta name="description" content="Jonas Einarsson's resume">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        
+        <link rel="apple-touch-icon" href="icon.png">
+        <!-- Place favicon.ico in the root directory -->
+
+        <link rel="stylesheet" href="../static/normalize.css">
+        <link rel="stylesheet" href="../static/fonts.css">
+        <link rel="stylesheet" href="../static/page.css">
+        <link rel="stylesheet" href="../static/katex.min.css">
+        <script defer src="../static/fontawesome-all.min.js"></script>
+        <script src="../static/katex.min.js"></script>
+        <script src="../static/auto-render.min.js"></script>
+
+                    
+    </head>
+    <body>
+    <div class="paper shadow-box">
+    <p><a href="/">&larr; Back to jonaseinarsson.se</a></p>
+    
+  <h1>Polar Plotter</h1>
+  <p>A polar plotter, or hanging V-plotter, is a basically a pen hanging in two pieces of wire. Two motors pull the wires and thus move the pen. Here is mine, inspired by the work of <a href="http://www.polargraph.co.uk/">Sandy Noble</a>.</p>
+<figure>
+<img src="drawing.jpg"/>
+<p>Drawing an Escher.</p>
+</figure><p>I designed it around 3D-printed plastic parts, plastic bead chain, 10mm ball bearings, stepper motors and an Arduino. I used Sandy's software. It may not look fancy, but it did produce pretty nice drawings:</p>
+<figure>
+<img src="octopus.jpg" style="max-height: 300px;"/>
+<p>
+This one made a christmas present for an octopus junkie.
+</p>
+</figure>
+The two colors are simply two passes (careful not to reset the homing calibration..)
+<figure>
+<img src="octopus-detail.jpg" style="max-height: 300px;"/>
+<p>
+Two-color octopus detail.
+</p>
+</figure><p>One of the design problems is that for the kinematics to work out nicely the two wires should converge to the center point where the pen tip is. (But, you say, compensating for a constant offset is surely trivial? Yes, but the gondola tends to rotate, too. An easy way of dealing with that is to place the pen in the point of rotational symmetry.)</p>
+<p>Sandy solved this by <a href="http://www.polargraph.co.uk/setup/polargraphsd-the-gondola/">mounting the pen inside a ball bearing with large inner diameter.</a> I did not have one of those, so I made a simple four bar linkage that keeps the line of the wire pointing to the pen tip:</p>
+<figure>
+    <img src="linkage.jpg"/>
+    <p>Four bar linkages keep the lines of the wires converging at the pen tip.</p>
+</figure><p>The plates are HDD platters from a 3.5" drive serving as weight to keep wires taut. They are conveniently very symmetric and have a hole in the center.</p>
+<p>The whole thing looked like this:</p>
+<figure>
+    <img src="overview.jpg"/>
+    <p>Ah, the aesthetics of orange ABS plastic and wiring. And the counterweights are random hardware with duct tape. Classy.</p>
+</figure>
+<figure>
+    <img src="arduino.jpg"/>
+    <p>Arduino mounted with stepper motor connections.</p>
+</figure><figure>
+    <img src="scraps.jpg"/>
+    <p>Scrapped designs and misprints.</p>
+</figure><p>I designed the parts parametrically in Autodesk Inventor, and they should be relatively easy to adapt to other motors, pens &amp; chains. I do not have access to Inventor anymore, but here's a <a href="Polplot.zip"><i class="far fa-file"></i> zip file</a> with all of them, should you like to have a go.</p>
+<figure>
+    <img src="sprocket.ipt.png" style="max-width: 25%"/>
+    <img src="motor_bracket.ipt.png" style="max-width: 25%"/>
+    <img src="gondola_hdd.ipt.png" style="max-width: 25%"/>
+</figure>
+        
+    <p><a href="/">&larr; Back to jonaseinarsson.se</a> | <a href="mailto:me@jonaseinarsson.se"><i class="far fa-envelope"></i>&nbsp;me@jonaseinarsson.se</a></p>
+    </div>   
+<script>
+renderMathInElement(document.body,
+    {
+        delimiters: [
+                      {left: "$$", right: "$$", display: false},
+                      {left: "\\[", right: "\\]", display: true}
+                    ]
+    });
+</script>         
+    </body>
+</html>

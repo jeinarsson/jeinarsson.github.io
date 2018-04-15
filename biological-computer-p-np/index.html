@@ -1,0 +1,71 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="x-ua-compatible" content="ie=edge">
+        <title>A biological computer and P=NP — jonaseinarsson.se</title>
+        <meta name="description" content="Jonas Einarsson's resume">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        
+        <link rel="apple-touch-icon" href="icon.png">
+        <!-- Place favicon.ico in the root directory -->
+
+        <link rel="stylesheet" href="../static/normalize.css">
+        <link rel="stylesheet" href="../static/fonts.css">
+        <link rel="stylesheet" href="../static/page.css">
+        <link rel="stylesheet" href="../static/katex.min.css">
+        <script defer src="../static/fontawesome-all.min.js"></script>
+        <script src="../static/katex.min.js"></script>
+        <script src="../static/auto-render.min.js"></script>
+
+                    
+    </head>
+    <body>
+    <div class="paper shadow-box">
+    <p><a href="/">&larr; Back to jonaseinarsson.se</a></p>
+    
+  <h1>A biological computer and P=NP</h1>
+  <p>In a 2016 <a href="http://www.pnas.org/content/113/10/2591">PNAS paper (open access)</a> Nicolau et al. describe a proof-of-concept biological parallel computing device. The intention is that their approach may "solve larger combinatorial problems than existing computation devices". In particular they claim to circumvent the super-polynomial time requirement to solve a NP-complete problem. The claim is false, however, because it is based on a logical mistake. That in itself is not noteworthy - we researchers make mistakes all the time, but I do find it remarkable that the claim also made its way through editing and peer review in a top journal. In addition, the story made rounds in media because progress on NP-complete problems is important. But not even the discussions on Hacker News (<a href="https://news.ycombinator.com/item?id=11186640">here</a> &amp; <a href="https://news.ycombinator.com/item?id=11194015">here</a>) surfaced the mistake.</p>
+<p>I double-checked myself twice, asked a really smart colleague, and then wrote a Letter to the Editor of PNAS <a href="letter.pdf">[<i class="far fa-file-alt"></i> pdf]</a> (to which the authors replied <a href="letter-answer.pdf">[<i class="far fa-file-alt"></i> pdf]</a>).</p>
+<p>Their reply indicated to me that I did not express my point clearly enough, since they "argue that this technology merits further investigation into its scalability." To be blunt, I think that would be a waste of time, and here I will make a very simple argument for why their device, or any device operating in a similar fashion, does not make progress on solving NP-complete problems.</p>
+<p>In fact, if the device runs in polynomial time, I can simulate the same device in polynomial time on a conventional computer.</p>
+<p>I’ll explain how in the following. In particular I argue that if they are right, they settle <a href="https://en.wikipedia.org/wiki/P_versus_NP_problem">P=NP</a> once and for all.</p>
+<h2>The biological computer</h2>
+<p>In their words, the approach is “based on encoding combinatorial problems into the geometry of a physical network of lithographically defined channels, followed by exploration of the network in a parallel fashion using a large number of independent agents”. The network is built of junctions that either just propagate the agents, or randomly makes them go onto one of two different paths. Given enough agents all possible paths will be visited. This structure makes the network a directed graph.</p>
+<p>The graph is seeded in designated input nodes, and the solution to the combinatorial problem is found by reading out which nodes in the physical network are eventually visited by the agents. They built an example solving the <a href="https://en.wikipedia.org/wiki/Subset_sum_problem">Subset Sum problem</a> instance {2,5,9}, and the corresponding network is detailed in <a href="http://www.pnas.org/content/pnas/113/10/2591/F1.large.jpg">their Fig. 1</a>.</p>
+<p>Because many independent agents can explore the physical network simultaneously, the intention is to “[replace] the requirement for exponentially growing time needed by traditional, electronic computers to solve NP-complete problems, with the requirement for an exponentially growing number of independent computing agents.”</p>
+<h2>My critique and their reply</h2>
+<p>In my Letter I detail why their approach does not scale better than a conventional computer for the SSP. Basically, for any “hard” version of the SSP the network, and therefore the computation time, grows large, and for any other instance where the network stays small, a dynamic programming algorithm solves the problem efficiently on a regular computer.</p>
+<p>Their answer is, paraphrased, that the dynamic programming solution is specific for the SSP, and that their concept is more general: “Our concept comprises the conversion of a mathematical problem into a network of channels and nodes. If the network appropriately mirrors the problem, each unique trajectory through it corresponds to evaluating one solution from the pool of all potential solutions.”</p>
+<h2>If you can build it, I can simulate it</h2>
+<p>According to Nicolau et. al. their concept is to create a directed graph that represents a combinatorial problem, and find paths from any inlet node to any other node. The solution of the combinatorial problem is encoded in these paths.</p>
+<p>If you're into Computer Science you may at this point realize that they are solving the reachability problem for directed graphs, for which there are fast polynomial algorithms, optimized depending on graph topology, and so forth.</p>
+<p>I'm a physicist so I did not realize that, so let’s say we want to simulate the biological circuit a bit more closely. Can we simulate the system in general? Yes: weight propagation on a directed graph can be solved in polynomial time in the number of vertices $$ V $$. For concreteness, here’s a naive algorithm of polynomial complexity:</p>
+<ol>
+<li>Let $$\mathbf x$$ be the dimension $$V$$ vector that indicates if a node $$i$$ is visited ($$x_i&gt;0$$) or not ($$x_i=0$$)</li>
+<li>Let $$\mathbb A$$ be the $$V\times V$$ <a href="https://en.wikipedia.org/wiki/Adjacency_matrix">adjacency matrix</a> for the network. The action of this matrix is to propagate weight on the vertices one step along the edges of the graph.</li>
+<li>Initialize $$\mathbf x$$ to all zeros, but put a $$1$$ in any input node.</li>
+<li>Do $$V$$ times: $$\mathbf x \leftarrow \mathbb A \cdot \mathbf x$$.</li>
+</ol>
+<p>Since no path can be longer than $$V$$ steps, the non-zero elements of $$\mathbf x$$ now indicate the reachable nodes.</p>
+<p>This algorithm closely matches how the biological device functions. You could make a movie of the time steps, and save intermediate states, trajectories, and so on. All in polynomial time in the number of vertices.</p>
+<p>In summary, if the biological device is a directed graph of polynomial size, it can also be simulated in polynomial time.</p>
+<h2>What's the mistake?</h2>
+<p>First, the authors stress the idea of replacing the exponential time requirement with an exponential amount of computing agents. But that is in fact a red herring. In a computer simulation of the physical network there is no cost of splitting at a junction in the graph.</p>
+<p>Instead, the actual fallacy is in a subtle but very strong assumption on the problem instances. The strong assumption is that the physical network size must not scale exponentially with the problem. The authors somewhat casually mentions this in the original publication: “For normal cases, in which the gaps grow less than exponentially, e.g. if the set comprises consecutive prime numbers, the horizontal network length grows polynomially.”, and again in their reply to my Letter: “Is it possible to encode other NP-complete problems into ‘compact’ networks and, by using controlled self-replication, to bring an exponentially growing army of agents to bear on an exponentially growing solution pool?”</p>
+<p>This casual requirement of a “compact” network is actually extremely strong, and precisely the reason why an efficient simulation of their device is possible. Should such a compact representation of a NP-complete problem exist, we can simulate it in polynomial time on a computer, and P=NP is settled.</p>
+
+        
+    <p><a href="/">&larr; Back to jonaseinarsson.se</a> | <a href="mailto:me@jonaseinarsson.se"><i class="far fa-envelope"></i>&nbsp;me@jonaseinarsson.se</a></p>
+    </div>   
+<script>
+renderMathInElement(document.body,
+    {
+        delimiters: [
+                      {left: "$$", right: "$$", display: false},
+                      {left: "\\[", right: "\\]", display: true}
+                    ]
+    });
+</script>         
+    </body>
+</html>
